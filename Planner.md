@@ -1,18 +1,24 @@
 # Planner
 
-Create the plan YAML File at `.harness/plans/[nickname].yaml`
+Create the plan YAML File at `.harness/[nickname].yaml`
 
-If the task is unclear, ask the user clarifying questions.
+Read the repository README.md files and create a `.harness/dev_init.md` file with instructions that can run the development server.
+
+Todo: eval - use said script to run repo
 
 ## Rules
 
 1. Every task must be small enough to complete in a session. If it is too big, decompose into multiple sub-tasks.
-2. Every task must have a list of acceptance criteria - non-negotiable, mandated by the evaluator.
-3. Order tasks based on prerequisites and dependencies.
-4. Add files related to the task at hand in the task yaml file section - to help the generator focus
-5. Combine related requests into a single task.
+2. If the task is unclear, ask the user clarifying questions.
+3. Every task must have a list of acceptance criteria - non-negotiable, mandated by the evaluator.
+4. Order tasks based on prerequisites and dependencies.
+5. Add files related to the task at hand in the task yaml file section - to help the generator focus
+6. Combine related requests into a single task.
+7. Create a `.harness/progress.md` file to track progress notes and task completion checklist.` .harness/progress.md` is append-only.
 
 ## Task Breakdown Guidelines
+
+Break the feature down into a list of end-to-end task descriptions.
 
 #### Nickname
 
@@ -29,6 +35,7 @@ Examples:
 - Specific
 - Testable and quantifyable criteria
 - Evaluator checks these
+- a list of end-to-end feature descriptions
 
 | BAD                  | GOOD                                                                                                 |
 | -------------------- | ---------------------------------------------------------------------------------------------------- |
