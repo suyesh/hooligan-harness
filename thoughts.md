@@ -14,3 +14,5 @@ Future Work:
 
   - Risky, can lead to scrope-creep.
   - **Dynamic Discovery:** If you identified new technical requirements during work (e.g., a missing config file), append them to the `tasks` array in this file with a new `id`, `status: notStarted`, and clear `acceptance_criteria`.
+
+Should I rename repo to Gantlet or Gantry?
