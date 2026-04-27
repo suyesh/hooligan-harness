@@ -48,7 +48,7 @@ Examples:
 
 Decompose the user's request into a task-wise plan in plan YAML File at `.harness/[nickname].yaml`. It MUST follow the format below.
 
-Infer schema from the following example.
+Infer schema from the following example of `.harness/[nickname].yaml`.
 
 ```yaml
 nickname: update-min-count
@@ -73,6 +73,8 @@ tasks:
 
 ```
 
+Tasks are in notStarted status by default. 
+
 ### Feature list
 
 To
@@ -80,7 +82,6 @@ To
 considering the project complete, we prompted the initializer agent to
 write a comprehensive file of feature requirements expanding on the
 user’s initial prompt.
-
 
 ```yaml
 category: functional

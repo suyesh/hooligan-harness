@@ -2,27 +2,6 @@
 
 ### Principles
 
-1. **Single-Task Focus:** Work on exactly one task from the `.harness/[nickname].yaml` task plan at a time.
-2. Write summaries of progress updates in `.harness/progress.md`, which is append-only.
-3. **No Self-Grading:** You implement and verify, but only the **Evaluator** can mark a feature as `passes: true`.
-
-the next iteration of the coding agent was then asked to work on only one feature at a time.
-
-to write summaries of its progress in a progress file.
-
-Best way to elicit this behavior was to ask the model to commit its progress to git with descriptive commit messages
-
-```
-1. Run pwd to see the directory you’re working in. You’ll only be able to edit files in this directory.
-2. Read the git logs and progress files to get up to speed on what was recently worked on.
-3. Read the features list file and choose the highest-priority feature that’s not yet done to work on.
-```
-
-
-# Generator
-
-### Principles
-
 1. **Single-Task Focus:** Read the feature list file at the beginning of a session. Choose a single feature to start working on. Work on exactly one feature from the **Feature list** at a time.
 2. **Atomic Updates:** Every task completion or significant pivot requires a git commit and an entry in the append-only `.harness/progress.md`.
 3. **YAML-First Planning:** Before writing application code, generate a **Task List** entry in the specified YAML format to define your technical roadmap.
@@ -159,42 +138,42 @@ If the Evaluator Agent returns a **FAILED** verdict, you must immediately suspen
 
 ## 7. Reconciliation
 
-### A. Update the Task List (`.harness/[nickname].yaml`)
+### A. Update the Task List in (`.harness/[nickname].yaml`)
 
 * **Task Status:** Locate the specific `id` within the `tasks` array. Mark the status as `done`. If task is still in progress, mark as `inProgress`.
 * **Global Status:** If all tasks in this file are now `done`, update the top-level `status` of the YAML to `done`.
-
-### B. Update the Feature List
-
 * **Feature Step Validation:** Compare your results against the `steps` array in the Feature List.
 * **Pass/Fail State:** Only if the **entire** feature requirement is satisfied and verified by your tests, update `passes: true`.
+
   * *Note:* If individual tasks are done but the feature "step" isn't fully met, keep `passes: false`.
 
-### C. Update the Progress Ledger (`.harness/progress.yaml`)
+### B. Update the Progress Ledger (`.harness/progress.md`)
 
-Append a new document entry to the log. This is the "Why" and "How" that explains the state changes in the YAML files.
+Append a new document entry to the log. This is the "Why" and "How" that explains the state changes in the Markdown files.
 
-**Format for `progress.yaml` entry:**
+**Format for `progress.md` entry:**
 
-**YAML**
+**Markdown - use this to Think Out Loud**
 
-```markdown
+```yaml
 ---
 timestamp: '2026-04-26T18:30:00Z'
 status: SUCCESS | PARTIAL | FAILED
 task_nickname: update-min-count
 summary: "Successfully updated min_count variable and added type constraints."
 git_hash: "a1b2c3d"
+notes: "notes if any"
 updates:
   - file: ".harness/update-min-count.yaml"
     action: "Marked Task ID 1 as done."
   - file: "feature_list.yaml"
     action: "Set passes: true for 'Update min_count' feature."
 verification_evidence: "Terraform plan confirmed 10 nodes; 3 tests passed."
+next_step: "task to work on next""
 ---
 ```
 
-### D. Consistency Audit
+### C. Consistency Audit
 
 Before exiting, perform a final check:
 
