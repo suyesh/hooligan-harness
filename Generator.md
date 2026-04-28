@@ -162,7 +162,6 @@ status: SUCCESS | PARTIAL | FAILED
 task_nickname: update-min-count
 summary: "Successfully updated min_count variable and added type constraints."
 git_hash: "a1b2c3d"
-notes: "notes if any"
 updates:
   - file: ".harness/update-min-count.yaml"
     action: "Marked Task ID 1 as done."
@@ -170,6 +169,7 @@ updates:
     action: "Set passes: true for 'Update min_count' feature."
 verification_evidence: "Terraform plan confirmed 10 nodes; 3 tests passed."
 next_step: "task to work on next""
+notes: "notes if any, can be as long as the agent likes"
 ---
 ```
 
