@@ -35,13 +35,11 @@ To add this skill to **Claude Code**, copy the `harness-skill.md` file into your
 
 1. **Clone the repo:**
 ```bash
-git clone https://github.com/akilledar/hooligan-harness.git
+git clone https://github.com/aditikilledar/hooligan-harness.git
 
 ```
 
-
 2. **Add to Claude Code:**
-Ensure `harness-skill.md` is in your working directory or referenced in your Claude Code persona settings.
 Navigate to the cloned repo, and invoke a Claude session.
 Ask Claude to add SKILL.md and the subagents in /references as a Claude skill.
 
