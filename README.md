@@ -18,4 +18,6 @@ www.anthropic.com/engineering/effective-context-engineering-for-ai-agents
 
 https://www.anthropic.com/engineering/swe-bench-sonnet
 
+https://github.com/celesteanders/harness
+
 https://openai.com/index/harness-engineering/
