@@ -1,4 +1,4 @@
-#  Harness Engineering: hooliGAN-harness
+# Harness Engineering: hooliGAN-harness
 
 **Stop guessing if your agent's code works. Force it to survive the loop.**
 
@@ -21,11 +21,11 @@ This competitive loop continues until the Generator’s output is indistinguisha
 
 ## Personas
 
-| Persona | Role | Mindset |
-| --- | --- | --- |
-| **Planner** | Architect | Translates messy human intent into a rigid YAML roadmap with quantifiable Acceptance Criteria. |
-| **Generator** | Builder | Implements logic using SOLID principles and the "Principle of Least Change" to avoid bloat. |
-| **Evaluator** | Skeptic | Professional disdain for the output. If a test fails or a `TODO` exists, the task is rejected. |
+| Persona             | Role      | Mindset                                                                                          |
+| ------------------- | --------- | ------------------------------------------------------------------------------------------------ |
+| **Planner**   | Architect | Translates messy human intent into a rigid YAML roadmap with quantifiable Acceptance Criteria.   |
+| **Generator** | Builder   | Implements logic using SOLID principles and the "Principle of Least Change" to avoid bloat.      |
+| **Evaluator** | Skeptic   | Professional disdain for the output. If a test fails or a `TODO` exists, the task is rejected. |
 
 ---
 
@@ -34,14 +34,15 @@ This competitive loop continues until the Generator’s output is indistinguisha
 To add this skill to **Claude Code**, copy the `harness-skill.md` file into your project or global skill directory.
 
 1. **Clone the repo:**
+
 ```bash
 git clone https://github.com/aditikilledar/hooligan-harness.git
 
 ```
 
 2. **Add to Claude Code:**
-Navigate to the cloned repo, and invoke a Claude session.
-Ask Claude to add SKILL.md and the subagents in /references as a Claude skill.
+   Navigate to the cloned repo, and invoke a Claude session.
+   Ask Claude to add SKILL.md and the subagents in /references as a Claude skill.
 
 ---
 
@@ -70,10 +71,12 @@ Once the skill is active, you can trigger the entire adversarial loop with a sin
 
 **User Input** → **Planner** → **LOOP** (Generator ↔ Evaluator) **UNTIL ACs PASS** → **Hand-off**
 
+![Architecture Diagram](Architecture.jpg)
+
 ## References
 
 * [Anthropic: Effective Harnesses for Long-Running Agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)
-* [Anthropic: Managed Agents & Multi-Agent Orchestration](https://www.anthropic.com/engineering/managed-agents)
+* [Anthropic: Managed Agents &amp; Multi-Agent Orchestration](https://www.anthropic.com/engineering/managed-agents)
 * [Anthropic: Building Effective Agents](https://www.anthropic.com/engineering/building-effective-agents)
 * [Anthropic: Context Engineering for AI Agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)
 * [Anthropic: SWE-bench (Sonnet Edition)](https://www.anthropic.com/engineering/swe-bench-sonnet)
