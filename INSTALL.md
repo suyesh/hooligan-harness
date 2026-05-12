@@ -23,10 +23,10 @@ python install.py
 
 ## What Gets Installed
 
-The installer will add the following components to your Claude Code and/or Codex installation:
+The installer will add the following components to your Claude Code installation:
 
 ### Skills Directory
-- `~/.claude/skills/hooliGAN-harness/` or `~/.codex/skills/hooliGAN-harness/`
+- `~/.claude/skills/hooliGAN-harness/`
   - `SKILL.md` - Main skill definition
   - `README.md` - Documentation
   - `.harness/` - Configuration and knowledge base
@@ -38,20 +38,12 @@ The installer will add the following components to your Claude Code and/or Codex
     - `documentation/` - Living documentation config
 
 ### Agent Personas
-- `~/.claude/agents/` or `~/.codex/agents/`
+- `~/.claude/agents/`
   - `harness-planner.md` - Plans tasks and creates YAML roadmaps
   - `harness-architect.md` - Reviews plans for architectural impacts
   - `harness-generator.md` - Implements code following best practices
   - `harness-evaluator.md` - Adversarial functional evaluation
   - `harness-security-evaluator.md` - Parallel security scanning
-
-## Installation Options
-
-The installer provides three modes:
-
-1. **Claude Code Only** - Installs to `~/.claude/`
-2. **Codex Only** - Installs to `~/.codex/`
-3. **Both** - Installs to both environments
 
 ## Features
 
@@ -73,14 +65,14 @@ The installer provides three modes:
 ## System Requirements
 
 - **Python**: 3.8 or higher
-- **Claude Code** or **Codex**: At least one must be installed
+- **Claude Code**: Must be installed (~/.claude/ directory must exist)
 - **Dependencies**: Automatically installed by setup scripts
   - `rich` - Beautiful terminal UI
   - `uv` (optional) - Fast Python package manager
 
 ## Usage
 
-After installation, use the harness in your Claude Code or Codex session:
+After installation, use the harness in your Claude Code session:
 
 ```bash
 /harness "Add user authentication with JWT and rate limiting"
@@ -125,15 +117,13 @@ python install.py
 
 Or manually remove:
 - `~/.claude/skills/hooliGAN-harness/`
-- `~/.codex/skills/hooliGAN-harness/`
 - Agent files from `~/.claude/agents/harness-*.md`
-- Agent files from `~/.codex/agents/harness-*.md`
 
 ## Troubleshooting
 
-### "No Claude Code or Codex installation detected"
-- Ensure Claude Code or Codex is installed
-- Check that `~/.claude/` or `~/.codex/` directories exist
+### "Claude Code installation not detected"
+- Ensure Claude Code is installed
+- Check that `~/.claude/` directory exists
 
 ### "Permission denied" errors
 - On macOS/Linux: `chmod +x setup.sh`
