@@ -3,6 +3,8 @@
 
 version: 1.0.0
 last_updated: '2026-05-12'
+auto_learn: true  # Automatically learn and apply patterns by default
+pattern_application: "automatic"  # Apply proven patterns automatically
 
 discovered_patterns:
   - id: repository_pattern

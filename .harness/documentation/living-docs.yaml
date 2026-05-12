@@ -5,9 +5,10 @@ version: 1.0.0
 last_updated: '2026-05-12'
 
 living_documentation:
-  enabled: true
-  auto_update: true
+  enabled: true  # Auto-documentation enabled by default
+  auto_update: true  # Updates automatically as code changes
   update_frequency: "on_task_completion"
+  default_format: "markdown"  # Works without any external tools
 
   document_types:
     api_specification:

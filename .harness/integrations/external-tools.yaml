@@ -1,13 +1,16 @@
 # External Tool Integrations
 # Configuration for enterprise tool integrations
+# NOTE: All integrations are OPTIONAL - hooliGAN-harness works perfectly without any external tools
+# Only enable if you have these tools in your environment
 
 version: 1.0.0
 last_updated: '2026-05-12'
+all_optional: true  # Framework works without any external integrations
 
 integrations:
   ci_cd:
     github_actions:
-      enabled: false
+      enabled: false  # Set to true if using GitHub Actions
       configuration:
         workflow_path: ".github/workflows/"
         trigger_on:

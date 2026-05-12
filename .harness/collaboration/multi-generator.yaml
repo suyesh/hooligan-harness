@@ -5,9 +5,10 @@ version: 1.0.0
 last_updated: '2026-05-12'
 
 multi_generator_configuration:
-  enabled: false  # Set to true to enable multi-generator mode
+  enabled: true  # Multi-generator mode enabled by default for optimal performance
   max_parallel_generators: 3
   coordination_strategy: "event_bus"
+  auto_assign: true  # Automatically assign specialists based on task type
 
   generator_types:
     designer:

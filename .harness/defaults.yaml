@@ -1,0 +1,177 @@
+# Default Configuration for hooliGAN-harness
+# All features are optimally configured out-of-the-box
+# You can start using the framework immediately without any configuration
+# Modify these settings only if you need to customize behavior
+
+version: 1.3.1
+framework:
+  name: "hooliGAN-harness"
+  description: "High-reliability engineering framework with adversarial evaluation"
+
+# All features enabled by default for optimal experience
+features:
+  # Core Features - Always On
+  adversarial_evaluation: true
+  parallel_security_scanning: true
+  architectural_review: true
+  design_review_for_frontend: true
+
+  # Intelligence Features - Enabled by Default
+  failure_pattern_learning: true
+  confidence_scoring: true
+  cross_session_learning: true
+  pattern_auto_application: true
+
+  # Reliability Features - Enabled by Default
+  automatic_snapshots: true
+  rollback_on_critical_failure: true
+  incident_reporting: true
+
+  # Scale Features - Enabled by Default
+  multi_generator_mode: true
+  parallel_evaluation: true
+  living_documentation: true
+
+  # Optional Features - Disabled by Default (Enable if needed)
+  external_integrations: false  # Enable only if you have CI/CD tools
+  enterprise_monitoring: false  # Enable only if you have Datadog/Sentry
+
+# Default Confidence Levels (Optimally Configured)
+confidence_levels:
+  # Tasks are automatically categorized and validated accordingly
+  exploration: [0, 40]     # New/complex tasks get thorough validation
+  development: [40, 70]    # Standard tasks get balanced validation
+  production: [70, 90]     # Proven patterns get streamlined validation
+  verified: [90, 100]      # Repeated successes get minimal validation
+
+# Default Thresholds (Optimally Configured)
+thresholds:
+  # These trigger automatic actions
+  rollback_triggers:
+    performance_regression: 20  # Rollback if performance drops >20%
+    test_coverage_drop: 80     # Rollback if coverage drops below 80%
+    security_vulnerability: "high"  # Rollback on high/critical vulnerabilities
+
+  # Quality gates
+  minimum_test_coverage: 80
+  maximum_cyclomatic_complexity: 10
+  maximum_file_size_lines: 800
+
+# Default Persona Configuration
+personas:
+  # All personas active by default
+  planner:
+    enabled: true
+    auto_decompose_large_tasks: true
+    max_task_size: "session"  # Tasks sized for one session
+
+  architect:
+    enabled: true
+    review_threshold: 3  # Review if task affects >3 files
+    pattern_suggestion: true
+
+  designer:
+    enabled: true
+    auto_trigger_on_frontend: true
+    accessibility_level: "WCAG 2.1 AA"
+
+  generator:
+    enabled: true
+    defensive_programming: true
+    pattern_aware: true
+    principle_of_least_change: true
+
+  evaluator:
+    enabled: true
+    zero_trust_mode: true
+    instant_fail_on_todos: true
+
+  security_evaluator:
+    enabled: true
+    parallel_execution: true
+    owasp_top_10_scan: true
+
+# Multi-Generator Settings (Optimally Configured)
+multi_generator:
+  enabled: true
+  max_parallel: 3
+  auto_assignment: true  # Automatically assigns best specialist
+  coordination: "event_bus"
+
+  # Specialist allocation
+  task_routing:
+    frontend: ["designer", "frontend_specialist"]
+    backend: ["backend_specialist"]
+    database: ["database_specialist"]
+    full_stack: ["designer", "frontend_specialist", "backend_specialist", "database_specialist"]
+
+# Learning System (Optimally Configured)
+learning:
+  # Automatically learns from every session
+  capture_patterns: true
+  learn_from_failures: true
+  learn_from_successes: true
+  pattern_confidence_threshold: 0.75  # Use patterns with >75% success rate
+
+  # Auto-evolution
+  promote_patterns_to_standard: true
+  deprecate_failing_patterns: true
+  share_patterns_across_sessions: true
+
+# Documentation (Optimally Configured)
+documentation:
+  auto_generate: true
+  formats:
+    - markdown  # Always available, no dependencies
+    - openapi   # For API documentation
+    - mermaid   # For diagrams
+
+  update_triggers:
+    - task_completion
+    - api_change
+    - architecture_change
+
+# Performance Optimization (Optimally Configured)
+optimization:
+  # Smart caching
+  cache_learned_patterns: true
+  cache_confidence_scores: true
+
+  # Resource management
+  cleanup_old_snapshots: true
+  snapshot_retention_days: 7
+
+  # Parallel execution
+  parallel_evaluation: true
+  parallel_testing: true
+
+# User Experience (Optimally Configured)
+user_experience:
+  # Progress tracking
+  show_progress_indicators: true
+  detailed_error_messages: true
+
+  # Helpful defaults
+  auto_suggest_patterns: true
+  explain_decisions: true
+  provide_fix_suggestions: true
+
+# No Configuration Required Notice
+notice: |
+  🎉 hooliGAN-harness is ready to use immediately!
+
+  All features are optimally configured with production-ready defaults.
+  You don't need to change any settings to get started.
+
+  Simply run: /harness "Your feature request"
+
+  The framework will automatically:
+  ✅ Plan your implementation
+  ✅ Review architecture
+  ✅ Create designs (for UI tasks)
+  ✅ Generate code with tests
+  ✅ Run security scans
+  ✅ Learn from the experience
+  ✅ Document everything
+
+  Customize settings only if you have specific requirements.

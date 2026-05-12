@@ -6,6 +6,19 @@ Inspired by the adversarial tension of GAN architectures, `hooliGAN-harness` is 
 
 ---
 
+## 🎯 Zero Configuration Required!
+
+**hooliGAN-harness works perfectly out-of-the-box with optimal defaults:**
+- ✅ All intelligence features enabled (learning, patterns, confidence scoring)
+- ✅ All safety features active (snapshots, rollback, security scanning)
+- ✅ Multi-generator mode ready (parallel specialists)
+- ✅ Living documentation automatic
+- ✅ No external dependencies required
+
+Just install and use - that's it!
+
+---
+
 ## 🚀 Quick Installation
 
 ### Automatic Installation (Recommended)
@@ -105,7 +118,7 @@ This competitive loop continues until the output is indistinguishable from senio
 
 ## 💻 Usage
 
-Once installed, trigger the harness in your Claude Code or Codex session:
+Once installed, trigger the harness in your Claude Code session - **no configuration needed!**
 
 ### Basic Usage
 ```bash

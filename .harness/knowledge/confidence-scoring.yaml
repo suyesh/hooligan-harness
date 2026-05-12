@@ -3,6 +3,7 @@
 
 version: 1.0.0
 last_updated: '2026-05-12'
+auto_enabled: true  # Confidence scoring is active by default
 
 scoring_factors:
   task_complexity:

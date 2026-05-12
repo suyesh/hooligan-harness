@@ -6,10 +6,11 @@ last_updated: '2026-05-12'
 
 rollback_configuration:
   snapshot_strategy:
-    enabled: true
+    enabled: true  # Automatic snapshots enabled by default for safety
     snapshot_before_task: true
     use_git_worktree: true
     isolation_method: "branch"
+    auto_rollback: true  # Automatically rollback on critical failures
 
     git_configuration:
       create_backup_branch: true
