@@ -1,7 +1,7 @@
 ---
 name: harness
 description: Implements a high-reliability "Harness Engineering" loop with multi-generator collaboration, enterprise tool integration, and living documentation. Trigger when a user wants to "implement a feature," "start the harness," or "build with verification."
-version: 1.3.0
+version: 1.3.1
 ---
 ## Objective
 
@@ -29,6 +29,14 @@ To replace one-shot code generation with a structured, self-correcting agentic l
 * Assess risks and propose alternative approaches.
 * Define rollback strategy based on task complexity.
 * Must APPROVE before Generator can proceed for tasks affecting >3 files.
+
+### 2.6. Phase 1.6: Design Review (The Designer) - For Frontend Tasks
+
+* Create UI/UX specifications for frontend components.
+* Define design tokens, spacing, typography, and color systems.
+* Specify interaction patterns and user flows.
+* Ensure accessibility standards (WCAG 2.1 AA).
+* Must APPROVE design before Frontend Generator proceeds.
 
 ### 3. Phase 2: Implementation (The Generator)
 
@@ -74,6 +82,7 @@ Both evaluators must return PASS for the task to be considered complete.
 ### Personas
 * **Planner**: Focuses on structured YAML roadmap creation and task decomposition.
 * **Architect**: Reviews plans for system-wide impacts and design patterns before implementation.
+* **Designer**: Creates UI/UX specifications, ensures accessibility, and defines interaction patterns for frontend tasks.
 * **Generator**: Focuses on defensive programming, architectural synthesis, and local verification with pattern-aware implementation.
 * **Evaluator**: Acts as the gatekeeper using a Zero-Trust approach to code quality.
 * **Security Evaluator**: Parallel security-focused evaluation for vulnerabilities and security best practices.

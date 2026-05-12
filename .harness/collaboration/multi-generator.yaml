@@ -10,13 +10,43 @@ multi_generator_configuration:
   coordination_strategy: "event_bus"
 
   generator_types:
+    designer:
+      id: "gen-designer"
+      expertise:
+        - "UI/UX design"
+        - "Design systems"
+        - "Accessibility"
+        - "User flows"
+        - "Interaction design"
+        - "Responsive design"
+      assignment_rules:
+        file_patterns:
+          - "*.design.md"
+          - "*.figma"
+          - "*.sketch"
+          - "design-tokens.json"
+          - "theme.config.*"
+        task_keywords:
+          - "design"
+          - "UI"
+          - "UX"
+          - "mockup"
+          - "prototype"
+          - "layout"
+          - "interface"
+      triggers:
+        - "Frontend tasks requiring design"
+        - "New component creation"
+        - "User interface changes"
+        - "Accessibility improvements"
+
     frontend_specialist:
       id: "gen-frontend"
       expertise:
         - "React/Vue/Angular components"
         - "CSS/Styling"
         - "State management"
-        - "UI/UX implementation"
+        - "UI implementation from designs"
       assignment_rules:
         file_patterns:
           - "*.tsx"
@@ -26,10 +56,10 @@ multi_generator_configuration:
           - "*.css"
         task_keywords:
           - "component"
-          - "UI"
           - "frontend"
           - "style"
           - "form"
+      works_after: "designer"  # Frontend implements after Designer approves
 
     backend_specialist:
       id: "gen-backend"

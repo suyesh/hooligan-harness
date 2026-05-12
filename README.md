@@ -45,12 +45,13 @@ This competitive loop continues until the output is indistinguishable from senio
 
 ---
 
-## 🎭 The Five Personas
+## 🎭 The Six Personas
 
 | Persona | Role | Responsibility |
 |---------|------|----------------|
 | **Planner** | 📋 Architect | Translates human intent into rigid YAML roadmaps with quantifiable Acceptance Criteria |
 | **Architect** | 🏗️ Reviewer | Reviews plans for system-wide impacts and suggests design patterns before coding |
+| **Designer** | 🎨 UI/UX Expert | Creates design specifications, ensures accessibility, and defines user interactions |
 | **Generator** | 💻 Builder | Implements using SOLID principles, defensive programming, and pattern awareness |
 | **Evaluator** | 🔍 Gatekeeper | Zero-trust verification with professional disdain for lazy code |
 | **Security Evaluator** | 🛡️ Guardian | Parallel OWASP Top 10 scanning and vulnerability detection |

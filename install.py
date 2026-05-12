@@ -116,7 +116,7 @@ class HooliganInstaller:
         """Display feature overview"""
         features_panel = Panel(
             "[bold green]✨ Features to Install:[/bold green]\n\n"
-            "• [cyan]5 Personas[/cyan]: Planner, Architect, Generator, Evaluator, Security Evaluator\n"
+            "• [cyan]6 Personas[/cyan]: Planner, Architect, Designer, Generator, Evaluator, Security Evaluator\n"
             "• [cyan]Failure Pattern Memory[/cyan]: Learning from past mistakes\n"
             "• [cyan]Confidence Scoring[/cyan]: Adaptive validation levels\n"
             "• [cyan]Rollback Mechanisms[/cyan]: Automatic recovery from failures\n"
@@ -165,6 +165,7 @@ class HooliganInstaller:
                 (".harness", skills_dir / ".harness"),
                 ("personas/Planner.md", agents_dir / "harness-planner.md"),
                 ("personas/Architect.md", agents_dir / "harness-architect.md"),
+                ("personas/Designer.md", agents_dir / "harness-designer.md"),
                 ("personas/Generator.md", agents_dir / "harness-generator.md"),
                 ("personas/Evaluator.md", agents_dir / "harness-evaluator.md"),
                 ("personas/SecurityEvaluator.md", agents_dir / "harness-security-evaluator.md"),
@@ -275,6 +276,7 @@ class HooliganInstaller:
         persona_files = [
             "harness-planner.md",
             "harness-architect.md",
+            "harness-designer.md",
             "harness-generator.md",
             "harness-evaluator.md",
             "harness-security-evaluator.md"
