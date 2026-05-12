@@ -1,8 +1,8 @@
-# Harness Engineering: hooliGAN-harness
+# Harness Engineering: hooliGAN-harness v1.3.0
 
 **Stop guessing if your agent's code works. Force it to survive the loop.**
 
-Inspired by the adversarial tension of GAN architectures, `hooliGAN-harness` is a high-reliability engineering framework for Claude Code. It replaces fragile "one-shot" generation with a zero-trust pipeline where a Skeptic Evaluator relentlessly hunts for reasons to fail the Generator's code until it is objectively perfect.
+Inspired by the adversarial tension of GAN architectures, `hooliGAN-harness` is a high-reliability engineering framework for Claude Code. It replaces fragile "one-shot" generation with a zero-trust pipeline featuring architectural review, parallel security evaluation, confidence-based validation, automatic rollback, cross-session learning, multi-generator collaboration, and enterprise integrations — ensuring enterprise-grade code quality.
 
 ---
 

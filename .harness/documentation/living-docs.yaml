@@ -1,0 +1,406 @@
+# Living Documentation System
+# Auto-generates and maintains documentation from code
+
+version: 1.0.0
+last_updated: '2026-05-12'
+
+living_documentation:
+  enabled: true
+  auto_update: true
+  update_frequency: "on_task_completion"
+
+  document_types:
+    api_specification:
+      format: "openapi"
+      version: "3.0.0"
+
+      generation:
+        source: "code_annotations"
+        tools:
+          - "swagger-jsdoc"
+          - "openapi-generator"
+
+        output_path: "./docs/api/openapi.yaml"
+
+        auto_detect:
+          - "REST endpoints"
+          - "Request/Response schemas"
+          - "Authentication methods"
+          - "Error codes"
+
+      template: |
+        openapi: 3.0.0
+        info:
+          title: {{project_name}} API
+          version: {{version}}
+          description: |
+            Auto-generated from code on {{timestamp}}
+        servers:
+          - url: {{base_url}}
+        paths:
+          {{#each endpoints}}
+          {{path}}:
+            {{method}}:
+              summary: {{summary}}
+              parameters: {{parameters}}
+              responses: {{responses}}
+          {{/each}}
+
+    architecture_diagrams:
+      format: "mermaid"
+
+      types:
+        system_overview:
+          trigger: "on_architectural_change"
+          components:
+            - "Services"
+            - "Databases"
+            - "External APIs"
+            - "Message queues"
+
+          template: |
+            graph TB
+              {{#each services}}
+              {{name}}[{{type}}]
+              {{/each}}
+
+              {{#each connections}}
+              {{from}} --> {{to}}
+              {{/each}}
+
+        sequence_diagrams:
+          trigger: "on_flow_change"
+
+          auto_generate_for:
+            - "API calls"
+            - "User workflows"
+            - "Integration points"
+
+          template: |
+            sequenceDiagram
+              {{#each participants}}
+              participant {{name}}
+              {{/each}}
+
+              {{#each interactions}}
+              {{from}}->>{{to}}: {{message}}
+              {{/each}}
+
+        data_flow:
+          trigger: "on_data_model_change"
+
+          template: |
+            graph LR
+              {{#each data_sources}}
+              {{name}}[({{type}})]
+              {{/each}}
+
+              {{#each transformations}}
+              {{source}} --> {{process}} --> {{destination}}
+              {{/each}}
+
+    state_machines:
+      format: "plantuml"
+
+      auto_detect:
+        - "Workflow states"
+        - "Order processing"
+        - "User lifecycle"
+        - "Task progression"
+
+      template: |
+        @startuml
+        [*] --> {{initial_state}}
+
+        {{#each transitions}}
+        {{from}} --> {{to}} : {{trigger}}
+        {{/each}}
+
+        {{final_state}} --> [*]
+        @enduml
+
+    decision_records:
+      format: "adr"  # Architecture Decision Records
+
+      location: "./docs/adr/"
+
+      naming: "ADR-{{number}}-{{title}}.md"
+
+      template: |
+        # ADR-{{number}}: {{title}}
+
+        ## Status
+        {{status}}
+
+        ## Context
+        {{context}}
+
+        ## Decision
+        {{decision}}
+
+        ## Consequences
+        {{consequences}}
+
+        ## Alternatives Considered
+        {{#each alternatives}}
+        - {{name}}: {{reason_rejected}}
+        {{/each}}
+
+    code_documentation:
+      inline_comments:
+        enforcement: "required_for_complex_logic"
+
+        complexity_threshold:
+          cyclomatic: 10
+          cognitive: 15
+
+        format:
+          functions: |
+            /**
+             * {{description}}
+             * @param {{param_name}} {{param_type}} - {{param_description}}
+             * @returns {{return_type}} {{return_description}}
+             * @throws {{error_type}} {{error_condition}}
+             * @example
+             * {{example_usage}}
+             */
+
+      readme_files:
+        auto_update:
+          - "Project README"
+          - "Module READMEs"
+          - "API documentation"
+
+        sections:
+          - "Installation"
+          - "Configuration"
+          - "Usage"
+          - "API Reference"
+          - "Testing"
+          - "Contributing"
+          - "License"
+
+    test_documentation:
+      coverage_reports:
+        format: "html"
+        location: "./docs/coverage/"
+
+        include:
+          - "Line coverage"
+          - "Branch coverage"
+          - "Function coverage"
+          - "Statement coverage"
+
+      test_inventory:
+        format: "markdown"
+
+        template: |
+          # Test Inventory
+
+          ## Unit Tests
+          {{#each unit_tests}}
+          - [ ] {{name}}: {{description}}
+          {{/each}}
+
+          ## Integration Tests
+          {{#each integration_tests}}
+          - [ ] {{name}}: {{description}}
+          {{/each}}
+
+          ## E2E Tests
+          {{#each e2e_tests}}
+          - [ ] {{name}}: {{description}}
+          {{/each}}
+
+    changelog:
+      format: "keepachangelog"
+      location: "./CHANGELOG.md"
+
+      auto_generate_from:
+        - "Git commits"
+        - "Task completions"
+        - "PR merges"
+
+      categories:
+        - "Added"
+        - "Changed"
+        - "Deprecated"
+        - "Removed"
+        - "Fixed"
+        - "Security"
+
+      template: |
+        # Changelog
+
+        ## [{{version}}] - {{date}}
+
+        ### Added
+        {{#each added}}
+        - {{description}} ([{{commit}}])
+        {{/each}}
+
+        ### Changed
+        {{#each changed}}
+        - {{description}} ([{{commit}}])
+        {{/each}}
+
+        ### Fixed
+        {{#each fixed}}
+        - {{description}} ([{{commit}}])
+        {{/each}}
+
+documentation_generation:
+  triggers:
+    immediate:
+      - "API endpoint added/modified"
+      - "Database schema change"
+      - "New architectural pattern"
+      - "Critical bug fix"
+
+    scheduled:
+      daily:
+        - "Metrics dashboard"
+        - "Test coverage report"
+
+      weekly:
+        - "Pattern library"
+        - "Performance benchmarks"
+
+      monthly:
+        - "Architecture review"
+        - "Technical debt inventory"
+
+  quality_checks:
+    completeness:
+      required_sections:
+        - "Description"
+        - "Parameters"
+        - "Return values"
+        - "Error handling"
+        - "Examples"
+
+      minimum_coverage: 80
+
+    accuracy:
+      validation:
+        - "Code-to-doc consistency"
+        - "Example executability"
+        - "Link validity"
+
+      auto_fix:
+        - "Update outdated examples"
+        - "Fix broken links"
+        - "Sync parameter names"
+
+    readability:
+      metrics:
+        - "Flesch reading ease"
+        - "Average sentence length"
+        - "Technical term density"
+
+      targets:
+        reading_ease: "> 60"
+        sentence_length: "< 20 words"
+        jargon_ratio: "< 0.2"
+
+synchronization:
+  code_to_docs:
+    real_time: true
+
+    watchers:
+      - pattern: "*.controller.*"
+        updates: "API documentation"
+
+      - pattern: "*.model.*"
+        updates: "Data model docs"
+
+      - pattern: "*.test.*"
+        updates: "Test inventory"
+
+  docs_to_code:
+    validation: true
+
+    checks:
+      - "Documented functions exist"
+      - "Parameters match signatures"
+      - "Examples compile"
+
+version_control:
+  documentation_branches:
+    strategy: "parallel"
+
+    branches:
+      - "main" -> "docs/main"
+      - "develop" -> "docs/develop"
+      - "release/*" -> "docs/release/*"
+
+  auto_merge:
+    enabled: true
+
+    conditions:
+      - "All quality checks pass"
+      - "No manual edits detected"
+      - "Review not required"
+
+distribution:
+  formats:
+    web:
+      - "Static site (Hugo/Docusaurus)"
+      - "GitHub Pages"
+      - "Confluence"
+
+    offline:
+      - "PDF"
+      - "EPUB"
+      - "Markdown bundle"
+
+  publishing:
+    automatic: true
+
+    destinations:
+      internal:
+        - "Team wiki"
+        - "SharePoint"
+        - "S3 bucket"
+
+      external:
+        - "Developer portal"
+        - "Public documentation site"
+        - "NPM package docs"
+
+search_optimization:
+  indexing:
+    enabled: true
+
+    tools:
+      - "Algolia"
+      - "ElasticSearch"
+      - "MeiliSearch"
+
+  metadata:
+    auto_generate:
+      - "Keywords"
+      - "Tags"
+      - "Categories"
+      - "Related links"
+
+analytics:
+  tracking:
+    page_views: true
+    search_terms: true
+    404_errors: true
+    feedback: true
+
+  reporting:
+    metrics:
+      - "Most viewed pages"
+      - "Common search terms"
+      - "Documentation gaps"
+      - "User satisfaction"
+
+  improvement:
+    based_on:
+      - "User feedback"
+      - "Search failures"
+      - "Support tickets"
+      - "Usage patterns"

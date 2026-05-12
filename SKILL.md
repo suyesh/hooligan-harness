@@ -1,7 +1,7 @@
 ---
 name: harness
-description: Implements a high-reliability "Harness Engineering" loop with architectural review, parallel evaluation, automatic rollback, and cross-session learning. Trigger when a user wants to "implement a feature," "start the harness," or "build with verification."
-version: 1.2.0
+description: Implements a high-reliability "Harness Engineering" loop with multi-generator collaboration, enterprise tool integration, and living documentation. Trigger when a user wants to "implement a feature," "start the harness," or "build with verification."
+version: 1.3.0
 ---
 ## Objective
 
@@ -33,12 +33,14 @@ To replace one-shot code generation with a structured, self-correcting agentic l
 ### 3. Phase 2: Implementation (The Generator)
 
 * Select Task: Identify the next pending task based on depends_on logic.
+* Multi-Generator Check: If enabled in .harness/collaboration/multi-generator.yaml, coordinate with other generators.
 * Rollback Preparation: Create snapshot using .harness/rollback/rollback-strategy.yaml before changes.
 * Confidence Assessment: Calculate confidence score using .harness/knowledge/confidence-scoring.yaml.
 * Pattern Application: Apply relevant patterns from .harness/evolution/patterns.yaml.
 * Logic Synthesis: Perform an impact analysis and define a testing strategy before writing code.
 * Pattern Check: Review .harness/knowledge/failure-patterns.yaml for relevant patterns to avoid.
 * Code Generation: Implement logic following SOLID, DRY, and KISS principles with pattern-aware defensive coding.
+* Documentation Update: Trigger living documentation generation from .harness/documentation/living-docs.yaml.
 * Atomic Updates: Every task completion requires a git commit and a progress entry.
 
 ### 4. Phase 3: Parallel Adversarial Evaluation
@@ -69,12 +71,22 @@ Both evaluators must return PASS for the task to be considered complete.
 
 ## Reference
 
-* Persona - Planner: Focuses on structured YAML roadmap creation and task decomposition.
-* Persona - Architect: Reviews plans for system-wide impacts and design patterns before implementation.
-* Persona - Generator: Focuses on defensive programming, architectural synthesis, and local verification with pattern-aware implementation.
-* Persona - Evaluator: Acts as the gatekeeper using a Zero-Trust approach to code quality.
-* Persona - Security Evaluator: Parallel security-focused evaluation for vulnerabilities and security best practices.
-* Knowledge - Failure Patterns: Learning system that captures and prevents recurring failure patterns.
-* Knowledge - Confidence Scoring: Adaptive scoring system that adjusts validation requirements based on task complexity and historical performance.
-* Rollback - Strategy: Automated rollback mechanisms with snapshot creation and incident reporting.
-* Evolution - Patterns: Cross-session learning system for discovering and refining successful implementation patterns.
+### Personas
+* **Planner**: Focuses on structured YAML roadmap creation and task decomposition.
+* **Architect**: Reviews plans for system-wide impacts and design patterns before implementation.
+* **Generator**: Focuses on defensive programming, architectural synthesis, and local verification with pattern-aware implementation.
+* **Evaluator**: Acts as the gatekeeper using a Zero-Trust approach to code quality.
+* **Security Evaluator**: Parallel security-focused evaluation for vulnerabilities and security best practices.
+
+### Knowledge Systems
+* **Failure Patterns**: Learning system that captures and prevents recurring failure patterns.
+* **Confidence Scoring**: Adaptive scoring system that adjusts validation requirements based on task complexity and historical performance.
+* **Evolution Patterns**: Cross-session learning system for discovering and refining successful implementation patterns.
+
+### Reliability Mechanisms
+* **Rollback Strategy**: Automated rollback mechanisms with snapshot creation and incident reporting.
+* **Multi-Generator Collaboration**: Parallel work by specialized generators on independent modules.
+
+### Integration & Documentation
+* **External Tools**: Enterprise tool integrations for CI/CD, monitoring, security, and documentation.
+* **Living Documentation**: Auto-generated and maintained documentation that stays in sync with code.

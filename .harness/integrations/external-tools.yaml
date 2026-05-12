@@ -1,0 +1,392 @@
+# External Tool Integrations
+# Configuration for enterprise tool integrations
+
+version: 1.0.0
+last_updated: '2026-05-12'
+
+integrations:
+  ci_cd:
+    github_actions:
+      enabled: false
+      configuration:
+        workflow_path: ".github/workflows/"
+        trigger_on:
+          - "push"
+          - "pull_request"
+
+        auto_generated_workflows:
+          test_runner:
+            name: "harness-test-suite"
+            template: |
+              name: Harness Test Suite
+              on: [push, pull_request]
+              jobs:
+                test:
+                  runs-on: ubuntu-latest
+                  steps:
+                    - uses: actions/checkout@v2
+                    - name: Run Evaluator
+                      run: |
+                        # Evaluator checks
+                    - name: Security Scan
+                      run: |
+                        # Security evaluator checks
+
+          performance_check:
+            name: "harness-performance"
+            frequency: "on_merge"
+
+      status_reporting:
+        - "commit_status"
+        - "check_runs"
+        - "pr_comments"
+
+    jenkins:
+      enabled: false
+      configuration:
+        jenkinsfile_path: "Jenkinsfile"
+        pipeline_type: "declarative"
+
+        stages:
+          - "Checkout"
+          - "Architect Review"
+          - "Build"
+          - "Test"
+          - "Security Scan"
+          - "Deploy"
+
+    gitlab_ci:
+      enabled: false
+      configuration:
+        config_file: ".gitlab-ci.yml"
+
+        stages:
+          - "validate"
+          - "build"
+          - "test"
+          - "security"
+          - "deploy"
+
+  monitoring:
+    datadog:
+      enabled: false
+      configuration:
+        api_key: "${DATADOG_API_KEY}"
+        app_key: "${DATADOG_APP_KEY}"
+
+        metrics:
+          custom_metrics:
+            - name: "harness.task.completion_time"
+              type: "gauge"
+              tags: ["task_id", "generator_id"]
+
+            - name: "harness.evaluation.pass_rate"
+              type: "rate"
+              tags: ["evaluator_type"]
+
+            - name: "harness.rollback.frequency"
+              type: "counter"
+              tags: ["trigger_type"]
+
+        alerts:
+          - name: "High Failure Rate"
+            condition: "pass_rate < 0.5"
+            severity: "warning"
+
+          - name: "Excessive Rollbacks"
+            condition: "rollback_frequency > 3/hour"
+            severity: "critical"
+
+    sentry:
+      enabled: false
+      configuration:
+        dsn: "${SENTRY_DSN}"
+        environment: "harness"
+
+        error_tracking:
+          - "Generator failures"
+          - "Evaluator exceptions"
+          - "Rollback errors"
+          - "Integration failures"
+
+        performance_monitoring:
+          - "Task completion time"
+          - "Test execution duration"
+          - "Build time"
+
+    prometheus:
+      enabled: false
+      configuration:
+        pushgateway_url: "${PROMETHEUS_PUSHGATEWAY}"
+
+        metrics:
+          - "harness_tasks_total"
+          - "harness_tasks_completed"
+          - "harness_tasks_failed"
+          - "harness_evaluation_duration_seconds"
+          - "harness_rollback_total"
+
+  security:
+    snyk:
+      enabled: false
+      configuration:
+        api_token: "${SNYK_TOKEN}"
+
+        scanning:
+          dependencies: true
+          code: true
+          containers: true
+          iac: true
+
+        policies:
+          fail_on_high_severity: true
+          fail_on_unpinned_versions: false
+          license_check: true
+
+        reporting:
+          format: "json"
+          output: ".harness/security/snyk-report.json"
+
+    sonarqube:
+      enabled: false
+      configuration:
+        server_url: "${SONAR_HOST_URL}"
+        token: "${SONAR_TOKEN}"
+
+        analysis:
+          language: "auto-detect"
+
+          quality_gates:
+            - metric: "coverage"
+              operator: "LT"
+              value: "80"
+
+            - metric: "bugs"
+              operator: "GT"
+              value: "0"
+
+            - metric: "vulnerabilities"
+              operator: "GT"
+              value: "0"
+
+            - metric: "code_smells"
+              operator: "GT"
+              value: "10"
+
+        exclusions:
+          - "**/*.test.*"
+          - "**/tests/**"
+          - "**/node_modules/**"
+
+    veracode:
+      enabled: false
+      configuration:
+        api_id: "${VERACODE_API_ID}"
+        api_key: "${VERACODE_API_KEY}"
+
+        scan_types:
+          - "static"
+          - "dynamic"
+          - "software_composition"
+
+        policy:
+          compliance_level: "very_high"
+          break_build_on_policy_fail: true
+
+  documentation:
+    confluence:
+      enabled: false
+      configuration:
+        url: "${CONFLUENCE_URL}"
+        username: "${CONFLUENCE_USERNAME}"
+        api_token: "${CONFLUENCE_API_TOKEN}"
+
+        space_key: "HARNESS"
+
+        auto_publish:
+          - document: "Architecture Decisions"
+            page_title: "Harness Architecture Log"
+            update_frequency: "on_architect_approval"
+
+          - document: "API Documentation"
+            page_title: "Harness API Reference"
+            update_frequency: "on_api_change"
+
+          - document: "Pattern Library"
+            page_title: "Harness Design Patterns"
+            update_frequency: "weekly"
+
+    notion:
+      enabled: false
+      configuration:
+        api_key: "${NOTION_API_KEY}"
+        database_id: "${NOTION_DATABASE_ID}"
+
+        sync_items:
+          - "Task completion status"
+          - "Pattern effectiveness"
+          - "Incident reports"
+          - "Learning metrics"
+
+    docusaurus:
+      enabled: false
+      configuration:
+        docs_path: "./docs"
+
+        auto_generate:
+          - "API reference from OpenAPI"
+          - "Component documentation from JSDoc"
+          - "Architecture diagrams from code"
+          - "Changelog from git history"
+
+  version_control:
+    github:
+      enabled: false
+      configuration:
+        token: "${GITHUB_TOKEN}"
+
+        pr_automation:
+          auto_create: true
+          auto_label: true
+          auto_assign: false
+
+          labels:
+            - "harness-generated"
+            - "auto-tested"
+            - "security-scanned"
+
+        branch_protection:
+          require_pr_reviews: true
+          dismiss_stale_reviews: true
+          require_status_checks: true
+          require_up_to_date: true
+
+    gitlab:
+      enabled: false
+      configuration:
+        token: "${GITLAB_TOKEN}"
+
+        mr_settings:
+          remove_source_branch: true
+          squash_commits: true
+          require_pipeline_success: true
+
+  communication:
+    slack:
+      enabled: false
+      configuration:
+        webhook_url: "${SLACK_WEBHOOK_URL}"
+
+        notifications:
+          - event: "task_completed"
+            channel: "#harness-updates"
+            template: "Task {{task_id}} completed by {{generator_id}}"
+
+          - event: "evaluation_failed"
+            channel: "#harness-alerts"
+            template: "⚠️ Evaluation failed for {{task_id}}: {{reason}}"
+
+          - event: "rollback_triggered"
+            channel: "#harness-critical"
+            template: "🚨 Rollback triggered: {{trigger_reason}}"
+
+    discord:
+      enabled: false
+      configuration:
+        webhook_url: "${DISCORD_WEBHOOK_URL}"
+
+        notifications:
+          similar_to_slack: true
+
+    email:
+      enabled: false
+      configuration:
+        smtp_host: "${SMTP_HOST}"
+        smtp_port: "${SMTP_PORT}"
+        username: "${SMTP_USERNAME}"
+        password: "${SMTP_PASSWORD}"
+
+        recipients:
+          success: ["team@example.com"]
+          failure: ["oncall@example.com"]
+          critical: ["management@example.com"]
+
+integration_orchestration:
+  execution_order:
+    pre_implementation:
+      - "snyk dependency check"
+      - "sonarqube baseline"
+
+    during_implementation:
+      - "real-time monitoring"
+      - "incremental security scans"
+
+    post_implementation:
+      - "full security scan"
+      - "performance benchmarks"
+      - "documentation generation"
+
+    on_completion:
+      - "update confluence"
+      - "send notifications"
+      - "trigger CI/CD"
+
+  failure_handling:
+    retry_strategy:
+      max_attempts: 3
+      backoff: "exponential"
+      timeout: "5m"
+
+    fallback:
+      - "Log to local file"
+      - "Continue without integration"
+      - "Mark as warning, not failure"
+
+  credential_management:
+    storage: "environment_variables"
+
+    validation:
+      on_startup: true
+      periodic_check: "hourly"
+
+    rotation_reminder: "90d"
+
+webhook_endpoints:
+  inbound:
+    enabled: false
+    port: 8080
+
+    endpoints:
+      - path: "/webhook/github"
+        handler: "github_webhook_handler"
+
+      - path: "/webhook/ci-status"
+        handler: "ci_status_handler"
+
+      - path: "/webhook/security-scan"
+        handler: "security_scan_handler"
+
+  outbound:
+    rate_limiting:
+      requests_per_minute: 60
+      burst_size: 10
+
+    retry_policy:
+      max_retries: 3
+      timeout: "30s"
+
+metrics_aggregation:
+  collection_interval: "1m"
+
+  export_formats:
+    - "prometheus"
+    - "json"
+    - "csv"
+
+  storage:
+    local: ".harness/metrics/"
+    retention: "30d"
+
+  dashboards:
+    grafana_compatible: true
+    datadog_compatible: true

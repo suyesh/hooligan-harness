@@ -47,14 +47,14 @@
   "hotPaths": [
     {
       "path": "SKILL.md",
-      "accessCount": 13,
-      "lastAccessed": 1778617534630,
+      "accessCount": 17,
+      "lastAccessed": 1778618381346,
       "type": "file"
     },
     {
       "path": "README.md",
-      "accessCount": 1,
-      "lastAccessed": 1778615954008,
+      "accessCount": 3,
+      "lastAccessed": 1778618448127,
       "type": "file"
     },
     {
@@ -115,6 +115,24 @@
       "path": ".harness/evolution/patterns.yaml",
       "accessCount": 1,
       "lastAccessed": 1778617375988,
+      "type": "file"
+    },
+    {
+      "path": ".harness/collaboration/multi-generator.yaml",
+      "accessCount": 1,
+      "lastAccessed": 1778617689928,
+      "type": "file"
+    },
+    {
+      "path": ".harness/integrations/external-tools.yaml",
+      "accessCount": 1,
+      "lastAccessed": 1778617876711,
+      "type": "file"
+    },
+    {
+      "path": ".harness/documentation/living-docs.yaml",
+      "accessCount": 1,
+      "lastAccessed": 1778618013106,
       "type": "file"
     }
   ],

@@ -1,0 +1,338 @@
+# Multi-Generator Collaboration Configuration
+# Enables parallel work by specialized generators on independent modules
+
+version: 1.0.0
+last_updated: '2026-05-12'
+
+multi_generator_configuration:
+  enabled: false  # Set to true to enable multi-generator mode
+  max_parallel_generators: 3
+  coordination_strategy: "event_bus"
+
+  generator_types:
+    frontend_specialist:
+      id: "gen-frontend"
+      expertise:
+        - "React/Vue/Angular components"
+        - "CSS/Styling"
+        - "State management"
+        - "UI/UX implementation"
+      assignment_rules:
+        file_patterns:
+          - "*.tsx"
+          - "*.jsx"
+          - "*.vue"
+          - "*.scss"
+          - "*.css"
+        task_keywords:
+          - "component"
+          - "UI"
+          - "frontend"
+          - "style"
+          - "form"
+
+    backend_specialist:
+      id: "gen-backend"
+      expertise:
+        - "API endpoints"
+        - "Business logic"
+        - "Authentication/Authorization"
+        - "Data processing"
+      assignment_rules:
+        file_patterns:
+          - "*.controller.*"
+          - "*.service.*"
+          - "*.middleware.*"
+          - "*.route.*"
+        task_keywords:
+          - "API"
+          - "endpoint"
+          - "backend"
+          - "service"
+          - "auth"
+
+    database_specialist:
+      id: "gen-database"
+      expertise:
+        - "Schema design"
+        - "Migrations"
+        - "Query optimization"
+        - "Data modeling"
+      assignment_rules:
+        file_patterns:
+          - "*.sql"
+          - "*migration*"
+          - "*.model.*"
+          - "*.entity.*"
+        task_keywords:
+          - "database"
+          - "migration"
+          - "schema"
+          - "query"
+          - "model"
+
+    infrastructure_specialist:
+      id: "gen-infra"
+      expertise:
+        - "Docker configuration"
+        - "CI/CD pipelines"
+        - "Terraform/CloudFormation"
+        - "Kubernetes manifests"
+      assignment_rules:
+        file_patterns:
+          - "Dockerfile*"
+          - "*.tf"
+          - "*.yaml"
+          - "*.yml"
+          - ".github/workflows/*"
+        task_keywords:
+          - "deploy"
+          - "infrastructure"
+          - "CI/CD"
+          - "docker"
+          - "kubernetes"
+
+coordination_mechanisms:
+  event_bus:
+    implementation: "file_based"
+    location: ".harness/collaboration/events/"
+
+    event_types:
+      task_claimed:
+        schema:
+          generator_id: "string"
+          task_id: "string"
+          timestamp: "datetime"
+          estimated_completion: "datetime"
+
+      task_completed:
+        schema:
+          generator_id: "string"
+          task_id: "string"
+          timestamp: "datetime"
+          files_modified: "array"
+          tests_added: "array"
+
+      conflict_detected:
+        schema:
+          generator_ids: "array"
+          conflicting_files: "array"
+          resolution_needed: "boolean"
+
+      assistance_requested:
+        schema:
+          requesting_generator: "string"
+          assistance_type: "string"
+          context: "object"
+
+      sync_required:
+        schema:
+          generator_id: "string"
+          reason: "string"
+          blocking: "boolean"
+
+  shared_state:
+    type: "distributed_lock"
+    implementation: "file_lock"
+
+    lock_registry: ".harness/collaboration/locks/"
+
+    locking_rules:
+      - "One generator per file at a time"
+      - "Shared read access allowed"
+      - "Exclusive write access required"
+      - "Maximum lock duration: 10 minutes"
+      - "Auto-release on generator completion"
+
+  communication_protocol:
+    message_queue: ".harness/collaboration/messages/"
+
+    message_types:
+      direct_message:
+        from: "generator_id"
+        to: "generator_id"
+        content: "string"
+        priority: "low|medium|high"
+
+      broadcast:
+        from: "generator_id"
+        content: "string"
+        topic: "string"
+
+      status_update:
+        generator_id: "string"
+        status: "idle|working|blocked|completed"
+        current_task: "string"
+
+conflict_resolution:
+  strategies:
+    file_level:
+      detection: "lock_conflict"
+      resolution:
+        - "Queue modifications"
+        - "Merge non-overlapping changes"
+        - "Escalate to Architect for overlapping changes"
+
+    logical_level:
+      detection: "dependency_analysis"
+      resolution:
+        - "Reorder task execution"
+        - "Split task into sub-tasks"
+        - "Sequential execution fallback"
+
+    architectural_level:
+      detection: "impact_analysis"
+      resolution:
+        - "Architect intervention required"
+        - "Suspend conflicting work"
+        - "Redesign approach"
+
+  merge_strategies:
+    auto_mergeable:
+      - "Different files"
+      - "Different functions in same file"
+      - "Non-overlapping line ranges"
+
+    requires_review:
+      - "Same function modifications"
+      - "Conflicting imports"
+      - "Schema changes"
+
+    requires_architect:
+      - "API contract changes"
+      - "Database schema conflicts"
+      - "Architectural pattern violations"
+
+work_distribution:
+  assignment_algorithm:
+    initial_assignment:
+      - "Match task to specialist expertise"
+      - "Consider current workload"
+      - "Respect dependencies"
+      - "Optimize for parallelism"
+
+    dynamic_rebalancing:
+      triggers:
+        - "Generator idle for > 2 minutes"
+        - "Task blocked for > 5 minutes"
+        - "Generator failure"
+
+      actions:
+        - "Reassign unclaimed tasks"
+        - "Split large tasks"
+        - "Merge small related tasks"
+
+  dependency_management:
+    tracking:
+      - "File dependencies"
+      - "Module dependencies"
+      - "Task dependencies"
+      - "Test dependencies"
+
+    scheduling:
+      - "Topological sort for task order"
+      - "Critical path identification"
+      - "Parallel execution opportunities"
+
+  load_balancing:
+    metrics:
+      - "Tasks per generator"
+      - "Estimated completion time"
+      - "File modifications per generator"
+      - "Test coverage responsibility"
+
+    strategies:
+      - "Round-robin for equal tasks"
+      - "Weighted by complexity"
+      - "Affinity-based (keep related work together)"
+
+parallel_testing:
+  test_distribution:
+    strategies:
+      - "By test suite"
+      - "By execution time"
+      - "By module"
+      - "By dependency graph"
+
+  result_aggregation:
+    collection_point: ".harness/collaboration/test-results/"
+
+    aggregation_rules:
+      - "All tests must pass"
+      - "Coverage combined across generators"
+      - "Performance metrics averaged"
+
+synchronization_points:
+  mandatory_sync:
+    - "Before Architect review"
+    - "Before Evaluator phase"
+    - "After conflict detection"
+    - "On dependency completion"
+
+  sync_protocol:
+    steps:
+      - "All generators reach sync point"
+      - "Commit current work"
+      - "Share state updates"
+      - "Resolve conflicts"
+      - "Update task assignments"
+      - "Resume work"
+
+monitoring:
+  generator_health:
+    heartbeat_interval: "30s"
+    timeout_threshold: "2m"
+
+    failure_detection:
+      - "Missing heartbeat"
+      - "Repeated task failures"
+      - "Stuck on same task > 15m"
+
+    recovery_actions:
+      - "Restart generator"
+      - "Reassign tasks"
+      - "Escalate to single-generator mode"
+
+  collaboration_metrics:
+    efficiency:
+      - "Parallel speedup factor"
+      - "Resource utilization"
+      - "Idle time per generator"
+
+    quality:
+      - "Conflicts per session"
+      - "Integration failures"
+      - "Rework required"
+
+    coordination:
+      - "Message volume"
+      - "Lock contention"
+      - "Sync time overhead"
+
+fallback_mode:
+  triggers:
+    - "Excessive conflicts (>5 per hour)"
+    - "Generator failures (>2)"
+    - "Architect override"
+
+  actions:
+    - "Disable multi-generator mode"
+    - "Assign all work to single generator"
+    - "Document failure reason"
+    - "Adjust future thresholds"
+
+integration:
+  with_architect:
+    - "Architect assigns generators to tasks"
+    - "Architect resolves conflicts"
+    - "Architect can disable multi-mode"
+
+  with_evaluator:
+    - "Evaluator tests integrated work"
+    - "Evaluator identifies integration issues"
+    - "Evaluator can request re-sync"
+
+  with_planner:
+    - "Planner identifies parallelizable tasks"
+    - "Planner marks dependencies"
+    - "Planner estimates task complexity"
