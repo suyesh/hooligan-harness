@@ -1,0 +1,142 @@
+# Failure Pattern Memory
+# This file captures recurring failure patterns to prevent future occurrences
+# Auto-updated by Evaluator when failures are detected
+
+version: 1.0.0
+last_updated: '2026-05-12'
+
+patterns:
+  - id: missing_null_checks
+    category: defensive_programming
+    occurrences: 0
+    severity: high
+    description: "Code fails to handle null/undefined values properly"
+    detection_rules:
+      - "Direct property access without optional chaining"
+      - "Array methods called without length check"
+      - "Missing null guards at function entry"
+    prevention_strategies:
+      - "Use optional chaining (?.) for nested object access"
+      - "Add explicit null/undefined checks at function boundaries"
+      - "Use default parameters for function arguments"
+      - "Implement early return pattern for invalid inputs"
+    auto_inject_tests:
+      - pattern: "test('handles null input gracefully', () => { expect(() => functionName(null)).not.toThrow(); })"
+      - pattern: "test('handles undefined values', () => { expect(functionName(undefined)).toBeDefined(); })"
+
+  - id: sql_injection
+    category: security
+    occurrences: 0
+    severity: critical
+    description: "Direct string concatenation in SQL queries"
+    detection_rules:
+      - "String concatenation with SQL keywords"
+      - "Template literals in query strings"
+      - "Direct variable interpolation in queries"
+    prevention_strategies:
+      - "Always use parameterized queries"
+      - "Use ORM query builders"
+      - "Validate and sanitize all inputs"
+      - "Use stored procedures where appropriate"
+    auto_inject_tests:
+      - pattern: "test('prevents SQL injection', () => { const malicious = \"'; DROP TABLE users; --\"; expect(() => query(malicious)).not.toThrow(); })"
+
+  - id: race_conditions
+    category: concurrency
+    occurrences: 0
+    severity: high
+    description: "Concurrent operations causing data inconsistency"
+    detection_rules:
+      - "Multiple async operations without proper sequencing"
+      - "Shared state modifications without locks"
+      - "Missing await keywords in async chains"
+    prevention_strategies:
+      - "Use proper async/await patterns"
+      - "Implement mutex locks for shared resources"
+      - "Use atomic operations where possible"
+      - "Apply optimistic locking for database operations"
+    auto_inject_tests:
+      - pattern: "test('handles concurrent requests safely', async () => { const results = await Promise.all([operation(), operation()]); expect(results).toHaveConsistentState(); })"
+
+  - id: missing_error_handling
+    category: reliability
+    occurrences: 0
+    severity: medium
+    description: "Operations that can fail without proper error handling"
+    detection_rules:
+      - "Async operations without try-catch"
+      - "File operations without error handling"
+      - "Network requests without failure cases"
+    prevention_strategies:
+      - "Wrap async operations in try-catch blocks"
+      - "Implement circuit breaker pattern for external calls"
+      - "Add fallback mechanisms"
+      - "Log errors appropriately"
+    auto_inject_tests:
+      - pattern: "test('handles errors gracefully', async () => { mockAPI.mockRejectedValue(new Error('Network error')); const result = await functionName(); expect(result).toBeDefined(); })"
+
+  - id: hardcoded_secrets
+    category: security
+    occurrences: 0
+    severity: critical
+    description: "Credentials or API keys hardcoded in source code"
+    detection_rules:
+      - "String literals matching secret patterns"
+      - "API keys in configuration files"
+      - "Database credentials in code"
+    prevention_strategies:
+      - "Use environment variables"
+      - "Implement secret management service"
+      - "Use .env files with .gitignore"
+      - "Rotate compromised secrets immediately"
+    auto_inject_tests:
+      - pattern: "test('no hardcoded secrets', () => { const secretPattern = /api[_-]?key|secret|password|token/i; expect(codeContent).not.toMatch(secretPattern); })"
+
+  - id: xss_vulnerability
+    category: security
+    occurrences: 0
+    severity: high
+    description: "Unescaped user input in HTML output"
+    detection_rules:
+      - "Direct HTML string concatenation"
+      - "Using innerHTML with user data"
+      - "Unescaped template interpolation"
+    prevention_strategies:
+      - "Use framework's built-in escaping"
+      - "Sanitize HTML input with DOMPurify"
+      - "Use textContent instead of innerHTML"
+      - "Implement Content Security Policy"
+    auto_inject_tests:
+      - pattern: "test('prevents XSS attacks', () => { const malicious = '<script>alert(\"XSS\")</script>'; const output = renderHTML(malicious); expect(output).not.toContain('<script>'); })"
+
+  - id: missing_input_validation
+    category: reliability
+    occurrences: 0
+    severity: high
+    description: "Functions accepting input without validation"
+    detection_rules:
+      - "Direct use of request parameters"
+      - "Missing type checks"
+      - "No boundary validation for numbers"
+    prevention_strategies:
+      - "Validate all inputs at entry points"
+      - "Use schema validation (Joi, Zod, etc.)"
+      - "Implement whitelisting over blacklisting"
+      - "Set appropriate limits and boundaries"
+    auto_inject_tests:
+      - pattern: "test('validates input types', () => { expect(() => functionName('invalid')).toThrow(); })"
+      - pattern: "test('handles boundary values', () => { expect(functionName(Number.MAX_SAFE_INTEGER)).toBeDefined(); })"
+
+# Learning metrics
+metrics:
+  total_failures_prevented: 0
+  patterns_discovered: 7
+  average_fix_time_minutes: 0
+  most_common_category: "security"
+  learning_rate: 0.0
+
+# Pattern evolution tracking
+evolution:
+  new_patterns_this_week: 0
+  retired_patterns: []
+  pattern_effectiveness: []

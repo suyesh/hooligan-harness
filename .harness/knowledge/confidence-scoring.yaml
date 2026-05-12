@@ -1,0 +1,226 @@
+# Confidence Scoring System
+# Determines the level of scrutiny and verification needed based on task complexity and historical performance
+
+version: 1.0.0
+last_updated: '2026-05-12'
+
+scoring_factors:
+  task_complexity:
+    simple:
+      description: "Single file, <50 lines, no external dependencies"
+      base_score: 80
+      examples:
+        - "Add a utility function"
+        - "Fix a typo"
+        - "Update a constant"
+
+    moderate:
+      description: "Multiple files, <200 lines, limited dependencies"
+      base_score: 60
+      examples:
+        - "Add a new API endpoint"
+        - "Implement a React component"
+        - "Create a database migration"
+
+    complex:
+      description: "Many files, >200 lines, multiple dependencies"
+      base_score: 40
+      examples:
+        - "Refactor authentication system"
+        - "Implement new microservice"
+        - "Database schema redesign"
+
+    critical:
+      description: "Core system changes, security-sensitive, high risk"
+      base_score: 20
+      examples:
+        - "Payment processing"
+        - "User authentication"
+        - "Data encryption"
+
+  historical_performance:
+    success_rate_multiplier:
+      above_90: 1.2
+      between_70_90: 1.0
+      between_50_70: 0.8
+      below_50: 0.6
+
+    similar_task_bonus:
+      identical_pattern: 15
+      similar_pattern: 10
+      related_domain: 5
+      new_pattern: 0
+
+  code_quality_indicators:
+    positive:
+      has_tests: 10
+      follows_patterns: 5
+      documented: 5
+      type_safe: 5
+      error_handling: 5
+
+    negative:
+      uses_any_type: -10
+      no_tests: -15
+      complexity_high: -10
+      todo_comments: -5
+      console_logs: -5
+
+  environmental_factors:
+    test_coverage:
+      above_80: 10
+      between_60_80: 5
+      between_40_60: 0
+      below_40: -10
+
+    dependencies:
+      all_stable: 5
+      mostly_stable: 0
+      has_beta: -5
+      has_deprecated: -10
+
+confidence_levels:
+  exploration:
+    range: [0, 40]
+    description: "High uncertainty, needs extensive validation"
+    requirements:
+      generator:
+        - "Create multiple implementation approaches"
+        - "Document all assumptions"
+        - "Add extensive error handling"
+        - "Create comprehensive test suite"
+      evaluator:
+        - "Run all security scans"
+        - "Perform chaos testing"
+        - "Manual code review simulation"
+        - "Cross-reference with failure patterns"
+      security_evaluator:
+        - "Deep dependency analysis"
+        - "Threat modeling"
+        - "Penetration testing scenarios"
+
+  development:
+    range: [40, 70]
+    description: "Moderate confidence, standard validation"
+    requirements:
+      generator:
+        - "Follow established patterns"
+        - "Include edge case handling"
+        - "Write unit and integration tests"
+        - "Add inline documentation"
+      evaluator:
+        - "Standard test suite execution"
+        - "Code quality metrics"
+        - "Performance benchmarks"
+        - "Pattern compliance check"
+      security_evaluator:
+        - "OWASP Top 10 scan"
+        - "Dependency vulnerability check"
+        - "Input validation verification"
+
+  production:
+    range: [70, 90]
+    description: "High confidence, streamlined validation"
+    requirements:
+      generator:
+        - "Implement with best practices"
+        - "Include monitoring hooks"
+        - "Standard test coverage"
+        - "Update documentation"
+      evaluator:
+        - "Smoke tests"
+        - "Regression suite"
+        - "Performance validation"
+      security_evaluator:
+        - "Quick security scan"
+        - "Known vulnerability check"
+
+  verified:
+    range: [90, 100]
+    description: "Very high confidence, minimal validation"
+    requirements:
+      generator:
+        - "Implement proven solution"
+        - "Basic tests"
+        - "Update changelog"
+      evaluator:
+        - "Smoke tests only"
+        - "Syntax validation"
+      security_evaluator:
+        - "Automated scan only"
+
+scoring_algorithm:
+  calculation: |
+    1. Start with base_score from task_complexity
+    2. Multiply by historical_performance.success_rate_multiplier
+    3. Add similar_task_bonus if applicable
+    4. Add/subtract code_quality_indicators
+    5. Add/subtract environmental_factors
+    6. Clamp to range [0, 100]
+
+  formula: |
+    confidence = clamp(
+      base_score * success_multiplier +
+      similar_task_bonus +
+      sum(quality_indicators) +
+      sum(environmental_factors),
+      0, 100
+    )
+
+adaptive_learning:
+  score_adjustments:
+    on_success:
+      increase_base: 2
+      increase_multiplier: 0.05
+      max_increase: 10
+
+    on_failure:
+      decrease_base: 5
+      decrease_multiplier: 0.1
+      max_decrease: 20
+
+    pattern_recognition:
+      new_pattern_threshold: 3  # occurrences before pattern is recognized
+      pattern_confidence_boost: 5
+      pattern_decay_rate: 0.9  # per week without occurrence
+
+  feedback_loop:
+    track_metrics:
+      - "Time to completion"
+      - "Number of evaluation cycles"
+      - "Defects found post-merge"
+      - "Code review comments"
+
+    adjust_weights:
+      - "If defects found, reduce confidence for similar tasks"
+      - "If consistent success, increase base scores"
+      - "If specific patterns fail, add to negative indicators"
+
+override_triggers:
+  force_exploration:
+    - "Security-critical changes"
+    - "Payment processing"
+    - "User data handling"
+    - "Authentication/authorization"
+    - "Cryptographic operations"
+
+  force_verified:
+    - "Documentation only"
+    - "Comment updates"
+    - "Formatting changes"
+    - "Test-only modifications"
+
+reporting:
+  confidence_report:
+    task_id: "string"
+    final_score: "number"
+    level: "exploration|development|production|verified"
+    factors:
+      complexity: "number"
+      historical: "number"
+      quality: "number"
+      environmental: "number"
+    recommendations:
+      - "string"
+    required_validations:
+      - "string"
