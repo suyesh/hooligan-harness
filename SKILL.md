@@ -1,7 +1,7 @@
 ---
 name: harness
-description: Implements a high-reliability "Harness Engineering" loop using Planner, Generator, and Evaluator personas with parallel security evaluation, failure pattern learning, and confidence scoring. Trigger when a user wants to "implement a feature," "start the harness," or "build with verification."
-version: 1.1.0
+description: Implements a high-reliability "Harness Engineering" loop with architectural review, parallel evaluation, automatic rollback, and cross-session learning. Trigger when a user wants to "implement a feature," "start the harness," or "build with verification."
+version: 1.2.0
 ---
 ## Objective
 
@@ -22,10 +22,20 @@ To replace one-shot code generation with a structured, self-correcting agentic l
 * Define specific, quantifiable Acceptance Criteria (AC) for every task.
 * Initialize an append-only log at .harness/progress.md to track all session activity.
 
+### 2.5. Phase 1.5: Architectural Review (The Architect)
+
+* Review plan for system-wide impacts and architectural concerns.
+* Identify design patterns from .harness/evolution/patterns.yaml that apply.
+* Assess risks and propose alternative approaches.
+* Define rollback strategy based on task complexity.
+* Must APPROVE before Generator can proceed for tasks affecting >3 files.
+
 ### 3. Phase 2: Implementation (The Generator)
 
 * Select Task: Identify the next pending task based on depends_on logic.
+* Rollback Preparation: Create snapshot using .harness/rollback/rollback-strategy.yaml before changes.
 * Confidence Assessment: Calculate confidence score using .harness/knowledge/confidence-scoring.yaml.
+* Pattern Application: Apply relevant patterns from .harness/evolution/patterns.yaml.
 * Logic Synthesis: Perform an impact analysis and define a testing strategy before writing code.
 * Pattern Check: Review .harness/knowledge/failure-patterns.yaml for relevant patterns to avoid.
 * Code Generation: Implement logic following SOLID, DRY, and KISS principles with pattern-aware defensive coding.
@@ -49,8 +59,10 @@ Both evaluators must return PASS for the task to be considered complete.
 
 ### 5. Phase 4: Remediation and Reconciliation
 
+* Automatic Rollback: If critical failures detected, execute rollback procedure from .harness/rollback/rollback-strategy.yaml.
 * Remediation: If any Evaluator returns FAIL, the Generator must suspend new work, reproduce the failure locally, and fix the logic until it passes evaluation.
 * Pattern Learning: Update .harness/knowledge/failure-patterns.yaml with new failure patterns discovered.
+* Cross-Session Learning: Update .harness/evolution/patterns.yaml with successful patterns for future reuse.
 * Confidence Adjustment: Decrease confidence score for similar future tasks based on failure type.
 * Reconciliation: Once PASS is achieved, update the YAML task status to done and log the verification evidence including the git hash and test results in progress.md.
 * Success Learning: Increase confidence scores and update pattern effectiveness metrics for successful implementations.
@@ -58,8 +70,11 @@ Both evaluators must return PASS for the task to be considered complete.
 ## Reference
 
 * Persona - Planner: Focuses on structured YAML roadmap creation and task decomposition.
+* Persona - Architect: Reviews plans for system-wide impacts and design patterns before implementation.
 * Persona - Generator: Focuses on defensive programming, architectural synthesis, and local verification with pattern-aware implementation.
 * Persona - Evaluator: Acts as the gatekeeper using a Zero-Trust approach to code quality.
 * Persona - Security Evaluator: Parallel security-focused evaluation for vulnerabilities and security best practices.
 * Knowledge - Failure Patterns: Learning system that captures and prevents recurring failure patterns.
 * Knowledge - Confidence Scoring: Adaptive scoring system that adjusts validation requirements based on task complexity and historical performance.
+* Rollback - Strategy: Automated rollback mechanisms with snapshot creation and incident reporting.
+* Evolution - Patterns: Cross-session learning system for discovering and refining successful implementation patterns.

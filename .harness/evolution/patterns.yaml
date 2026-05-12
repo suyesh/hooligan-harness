@@ -1,0 +1,290 @@
+# Cross-Session Learning - Pattern Evolution
+# Patterns discovered and refined across multiple sessions
+
+version: 1.0.0
+last_updated: '2026-05-12'
+
+discovered_patterns:
+  - id: repository_pattern
+    name: "Repository Pattern"
+    category: "data_access"
+    first_seen: '2026-05-12'
+    last_used: '2026-05-12'
+    usage_count: 0
+    success_rate: 0.0
+    confidence_level: 85
+
+    description: "Encapsulates data access logic behind a consistent interface"
+
+    contexts:
+      - "Database operations"
+      - "API integrations"
+      - "File system access"
+      - "Cache management"
+
+    template: |
+      interface Repository<T> {
+        findAll(options?: QueryOptions): Promise<T[]>
+        findById(id: string): Promise<T | null>
+        findOne(criteria: Partial<T>): Promise<T | null>
+        create(entity: Omit<T, 'id'>): Promise<T>
+        update(id: string, entity: Partial<T>): Promise<T>
+        delete(id: string): Promise<boolean>
+        exists(id: string): Promise<boolean>
+      }
+
+    implementation_notes:
+      - "Always return null for not found, never throw"
+      - "Use transactions for multi-step operations"
+      - "Implement caching at repository level"
+      - "Add logging for all operations"
+
+    test_requirements:
+      - "Mock the underlying data source"
+      - "Test error handling"
+      - "Verify transaction rollback"
+      - "Check cache invalidation"
+
+  - id: circuit_breaker
+    name: "Circuit Breaker Pattern"
+    category: "resilience"
+    first_seen: '2026-05-12'
+    last_used: '2026-05-12'
+    usage_count: 0
+    success_rate: 0.0
+    confidence_level: 75
+
+    description: "Prevents cascading failures by stopping calls to failing services"
+
+    contexts:
+      - "External API calls"
+      - "Microservice communication"
+      - "Database connections"
+      - "Third-party integrations"
+
+    template: |
+      class CircuitBreaker {
+        private state: 'CLOSED' | 'OPEN' | 'HALF_OPEN' = 'CLOSED'
+        private failureCount = 0
+        private successCount = 0
+        private lastFailureTime?: Date
+
+        constructor(
+          private threshold: number = 5,
+          private timeout: number = 60000,
+          private resetTimeout: number = 30000
+        ) {}
+
+        async execute<T>(operation: () => Promise<T>): Promise<T> {
+          if (this.state === 'OPEN') {
+            if (this.shouldAttemptReset()) {
+              this.state = 'HALF_OPEN'
+            } else {
+              throw new Error('Circuit breaker is OPEN')
+            }
+          }
+
+          try {
+            const result = await operation()
+            this.onSuccess()
+            return result
+          } catch (error) {
+            this.onFailure()
+            throw error
+          }
+        }
+      }
+
+    implementation_notes:
+      - "Configure thresholds based on service SLA"
+      - "Log state transitions"
+      - "Emit metrics for monitoring"
+      - "Provide fallback mechanisms"
+
+  - id: event_sourcing
+    name: "Event Sourcing Pattern"
+    category: "architecture"
+    first_seen: '2026-05-12'
+    last_used: '2026-05-12'
+    usage_count: 0
+    success_rate: 0.0
+    confidence_level: 70
+
+    description: "Store state changes as a sequence of events"
+
+    contexts:
+      - "Audit logging"
+      - "Financial transactions"
+      - "Order processing"
+      - "State machines"
+
+    template: |
+      interface Event {
+        id: string
+        aggregateId: string
+        type: string
+        payload: any
+        metadata: {
+          timestamp: Date
+          userId?: string
+          version: number
+        }
+      }
+
+      class EventStore {
+        async append(event: Event): Promise<void>
+        async getEvents(aggregateId: string, fromVersion?: number): Promise<Event[]>
+        async getSnapshot(aggregateId: string): Promise<any>
+      }
+
+  - id: saga_pattern
+    name: "Saga Pattern"
+    category: "distributed_transactions"
+    first_seen: '2026-05-12'
+    last_used: '2026-05-12'
+    usage_count: 0
+    success_rate: 0.0
+    confidence_level: 65
+
+    description: "Manage distributed transactions across multiple services"
+
+    contexts:
+      - "Multi-service operations"
+      - "Compensation logic"
+      - "Long-running transactions"
+      - "Microservices orchestration"
+
+pattern_effectiveness:
+  evaluation_criteria:
+    - "Reduction in code duplication"
+    - "Decrease in bug density"
+    - "Improvement in maintainability"
+    - "Performance impact"
+    - "Developer satisfaction"
+
+  scoring:
+    high_effectiveness: "> 80% success rate with > 10 uses"
+    moderate_effectiveness: "60-80% success rate with > 5 uses"
+    low_effectiveness: "< 60% success rate"
+    insufficient_data: "< 5 uses"
+
+pattern_evolution:
+  maturity_stages:
+    experimental:
+      usage_threshold: 3
+      success_threshold: 0.6
+      documentation: "basic"
+      testing: "minimal"
+
+    proven:
+      usage_threshold: 10
+      success_threshold: 0.75
+      documentation: "comprehensive"
+      testing: "thorough"
+
+    standard:
+      usage_threshold: 25
+      success_threshold: 0.85
+      documentation: "complete with examples"
+      testing: "extensive with edge cases"
+
+    deprecated:
+      trigger: "success_rate < 0.5 after 20 uses"
+      action: "mark for removal"
+
+  improvement_tracking:
+    - pattern_id: "repository_pattern"
+      improvements:
+        - date: '2026-05-12'
+          change: "Initial template created"
+          impact: "baseline established"
+
+learning_mechanisms:
+  pattern_discovery:
+    triggers:
+      - "Repeated code structures (>3 occurrences)"
+      - "Successful architectural decisions"
+      - "Problem-solution pairs"
+      - "External best practices adopted"
+
+    validation:
+      - "Test in isolated environment"
+      - "Peer review by Architect"
+      - "Performance benchmarking"
+      - "Security assessment"
+
+  pattern_refinement:
+    continuous_improvement:
+      - "Collect usage metrics"
+      - "Analyze failure modes"
+      - "Incorporate feedback"
+      - "Update templates"
+
+    version_control:
+      - "Track pattern versions"
+      - "Maintain compatibility"
+      - "Document breaking changes"
+      - "Migration guides"
+
+  cross_pollination:
+    sharing_mechanisms:
+      - "Export successful patterns"
+      - "Import from other projects"
+      - "Community contributions"
+      - "Industry standards"
+
+    adaptation:
+      - "Customize for project needs"
+      - "Merge similar patterns"
+      - "Compose complex patterns"
+      - "Derive specialized variants"
+
+session_persistence:
+  storage:
+    format: "yaml"
+    location: ".harness/evolution/"
+    backup: ".harness/evolution/backup/"
+    retention: "unlimited"
+
+  synchronization:
+    auto_save: true
+    save_frequency: "after_each_use"
+    conflict_resolution: "newest_wins"
+
+  migration:
+    version_check: true
+    auto_migrate: true
+    rollback_on_error: true
+
+metrics:
+  global_statistics:
+    total_patterns: 4
+    patterns_last_week: 0
+    most_used_pattern: "none"
+    highest_success_pattern: "none"
+
+  learning_velocity:
+    new_patterns_per_week: 0.0
+    refinements_per_week: 0.0
+    deprecations_per_month: 0.0
+
+  impact_metrics:
+    code_reuse_increase: 0.0
+    bug_density_decrease: 0.0
+    development_speed_increase: 0.0
+
+integration:
+  with_generator:
+    - "Generator queries patterns before implementation"
+    - "Generator reports pattern usage success/failure"
+    - "Generator can suggest new patterns"
+
+  with_architect:
+    - "Architect validates new patterns"
+    - "Architect approves pattern modifications"
+    - "Architect can mandate pattern usage"
+
+  with_evaluator:
+    - "Evaluator checks pattern compliance"
+    - "Evaluator reports pattern effectiveness"
+    - "Evaluator identifies anti-patterns"

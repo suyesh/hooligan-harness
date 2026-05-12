@@ -1,0 +1,240 @@
+# Rollback Strategy Configuration
+# Automated rollback mechanisms for failed implementations
+
+version: 1.0.0
+last_updated: '2026-05-12'
+
+rollback_configuration:
+  snapshot_strategy:
+    enabled: true
+    snapshot_before_task: true
+    use_git_worktree: true
+    isolation_method: "branch"
+
+    git_configuration:
+      create_backup_branch: true
+      branch_naming: "backup/task-{task_id}-{timestamp}"
+      stash_uncommitted: true
+      preserve_working_directory: true
+
+  automatic_triggers:
+    performance_regression:
+      enabled: true
+      threshold: 20  # percentage
+      metrics:
+        - response_time
+        - memory_usage
+        - cpu_utilization
+      action: "immediate_rollback"
+      notification: "alert_team"
+
+    test_coverage_drop:
+      enabled: true
+      threshold: 80  # minimum percentage
+      action: "block_merge"
+      allow_override: false
+
+    security_vulnerability:
+      enabled: true
+      severity_levels:
+        critical: "immediate_rollback"
+        high: "immediate_rollback"
+        medium: "require_review"
+        low: "log_warning"
+
+    build_failure:
+      enabled: true
+      consecutive_failures: 2
+      action: "rollback_and_analyze"
+
+    linting_errors:
+      enabled: true
+      error_threshold: 0
+      action: "block_progress"
+
+rollback_procedures:
+  immediate_rollback:
+    steps:
+      - "Halt all operations"
+      - "Create incident report"
+      - "Git reset --hard to snapshot"
+      - "Restore database state if applicable"
+      - "Clear caches"
+      - "Run smoke tests"
+      - "Notify team"
+    estimated_time: "< 2 minutes"
+    automation_level: "fully_automated"
+
+  gradual_rollback:
+    steps:
+      - "Enable maintenance mode"
+      - "Redirect traffic to stable version"
+      - "Rollback code changes"
+      - "Migrate data if needed"
+      - "Verify system stability"
+      - "Restore full traffic"
+    estimated_time: "5-10 minutes"
+    automation_level: "semi_automated"
+
+  selective_rollback:
+    steps:
+      - "Identify affected components"
+      - "Rollback specific modules only"
+      - "Maintain unaffected features"
+      - "Run integration tests"
+      - "Monitor for side effects"
+    estimated_time: "10-15 minutes"
+    automation_level: "manual_guided"
+
+recovery_actions:
+  snapshot_restoration:
+    git_commands:
+      - "git stash"
+      - "git checkout {backup_branch}"
+      - "git cherry-pick {safe_commits}"
+    verification:
+      - "Run test suite"
+      - "Check build status"
+      - "Verify no regressions"
+
+  incident_reporting:
+    required_fields:
+      - timestamp
+      - task_id
+      - failure_type
+      - rollback_trigger
+      - affected_files
+      - error_messages
+      - recovery_time
+
+    report_destination: ".harness/incidents/{timestamp}-{task_id}.yaml"
+
+    template: |
+      incident_id: "{uuid}"
+      timestamp: "{iso_timestamp}"
+      task: "{task_id}"
+      severity: "{severity_level}"
+
+      trigger:
+        type: "{trigger_type}"
+        threshold_violated: "{threshold}"
+        actual_value: "{actual}"
+
+      impact:
+        files_affected: []
+        tests_failed: []
+        performance_degradation: {}
+
+      rollback:
+        strategy_used: "{strategy}"
+        start_time: "{start}"
+        completion_time: "{end}"
+        success: {boolean}
+
+      root_cause:
+        initial_hypothesis: ""
+        investigation_notes: ""
+        confirmed_cause: ""
+
+      prevention:
+        immediate_fix: ""
+        long_term_solution: ""
+        pattern_to_avoid: ""
+
+  root_cause_analysis:
+    automated_checks:
+      - "Git diff analysis"
+      - "Test failure patterns"
+      - "Dependency changes"
+      - "Configuration modifications"
+      - "Resource utilization"
+
+    investigation_queries:
+      - "What changed between last success and failure?"
+      - "Are there similar historical failures?"
+      - "Is this a known anti-pattern?"
+      - "Was there insufficient test coverage?"
+      - "Were non-functional requirements missed?"
+
+rollback_prevention:
+  pre_implementation_checks:
+    - "Architect approval received"
+    - "All dependencies verified"
+    - "Test coverage adequate"
+    - "Performance benchmarks established"
+    - "Security scan passed"
+    - "Rollback procedure documented"
+
+  progressive_deployment:
+    strategies:
+      feature_flags:
+        enabled: true
+        default_state: "disabled"
+        rollout_percentage: [5, 25, 50, 100]
+
+      canary_deployment:
+        enabled: true
+        initial_percentage: 5
+        increment: 10
+        wait_between: "10m"
+
+      blue_green:
+        enabled: false
+        switch_strategy: "dns"
+        rollback_time: "instant"
+
+  monitoring_hooks:
+    pre_deployment:
+      - "Record baseline metrics"
+      - "Verify monitoring tools active"
+      - "Set up alerts"
+
+    during_deployment:
+      - "Real-time performance tracking"
+      - "Error rate monitoring"
+      - "Resource utilization checks"
+
+    post_deployment:
+      - "Compare with baseline"
+      - "Check for anomalies"
+      - "Validate success criteria"
+
+rollback_metrics:
+  tracking:
+    total_rollbacks: 0
+    rollback_by_trigger:
+      performance: 0
+      security: 0
+      test_failure: 0
+      build_failure: 0
+
+    average_recovery_time: "0m"
+    rollback_success_rate: 100
+
+    patterns_identified:
+      - pattern: ""
+        occurrences: 0
+        prevention_applied: false
+
+  learning:
+    adjust_thresholds:
+      - "If false positives > 20%, increase thresholds"
+      - "If issues escape > 5%, decrease thresholds"
+
+    improve_detection:
+      - "Add new trigger types for repeated issues"
+      - "Refine existing triggers based on patterns"
+      - "Update prevention checklist"
+
+integration:
+  with_evaluator:
+    - "Evaluator can trigger immediate rollback"
+    - "Failed evaluation creates rollback point"
+
+  with_generator:
+    - "Generator must create snapshot before changes"
+    - "Generator implements rollback procedures"
+
+  with_architect:
+    - "Architect defines rollback requirements"
+    - "Architect approves rollback strategy"

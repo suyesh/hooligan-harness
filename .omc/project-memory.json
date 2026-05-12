@@ -47,8 +47,8 @@
   "hotPaths": [
     {
       "path": "SKILL.md",
-      "accessCount": 8,
-      "lastAccessed": 1778617015300,
+      "accessCount": 13,
+      "lastAccessed": 1778617534630,
       "type": "file"
     },
     {
@@ -97,6 +97,24 @@
       "path": ".harness/knowledge/confidence-scoring.yaml",
       "accessCount": 1,
       "lastAccessed": 1778616833437,
+      "type": "file"
+    },
+    {
+      "path": "personas/Architect.md",
+      "accessCount": 1,
+      "lastAccessed": 1778617136378,
+      "type": "file"
+    },
+    {
+      "path": ".harness/rollback/rollback-strategy.yaml",
+      "accessCount": 1,
+      "lastAccessed": 1778617240772,
+      "type": "file"
+    },
+    {
+      "path": ".harness/evolution/patterns.yaml",
+      "accessCount": 1,
+      "lastAccessed": 1778617375988,
       "type": "file"
     }
   ],
