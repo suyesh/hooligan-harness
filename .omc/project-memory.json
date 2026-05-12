@@ -134,6 +134,36 @@
       "accessCount": 1,
       "lastAccessed": 1778618013106,
       "type": "file"
+    },
+    {
+      "path": "install.py",
+      "accessCount": 1,
+      "lastAccessed": 1778619260723,
+      "type": "file"
+    },
+    {
+      "path": "pyproject.toml",
+      "accessCount": 1,
+      "lastAccessed": 1778619290928,
+      "type": "file"
+    },
+    {
+      "path": "setup.sh",
+      "accessCount": 1,
+      "lastAccessed": 1778619374496,
+      "type": "file"
+    },
+    {
+      "path": "setup.bat",
+      "accessCount": 1,
+      "lastAccessed": 1778619439283,
+      "type": "file"
+    },
+    {
+      "path": "INSTALL.md",
+      "accessCount": 1,
+      "lastAccessed": 1778619540467,
+      "type": "file"
     }
   ],
   "userDirectives": []
