@@ -1,25 +1,41 @@
 #!/usr/bin/env python3
 """
-hooliGAN-harness Installer
-Beautiful CLI installer for Claude Code and Codex
+hooliGAN-harness installer and maintenance CLI.
 """
 
-import sys
-import shutil
+import argparse
 import json
 import re
-from pathlib import Path
-from typing import List, Dict, Optional
+import shutil
+import subprocess
+import sys
+from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional, Sequence
+
+VERSION = "1.3.1"
+SKILL_NAME = "hooliGAN-harness"
+INSTALL_MANIFEST_PATH = Path(".harness") / "install-manifest.json"
+CLAUDE_PERSONAS = {
+    "Planner.md": "harness-planner.md",
+    "Architect.md": "harness-architect.md",
+    "Designer.md": "harness-designer.md",
+    "Generator.md": "harness-generator.md",
+    "Evaluator.md": "harness-evaluator.md",
+    "SecurityEvaluator.md": "harness-security-evaluator.md",
+}
+CODEX_REQUIRED_FILES = ["SKILL.md", "README.md", "INSTALL.md", "install.py", ".harness", "personas"]
+CLAUDE_REQUIRED_FILES = ["SKILL.md", "README.md", "INSTALL.md", "install.py", ".harness", "personas"]
 
 # Use rich when available; otherwise fall back to a dependency-free terminal UI.
 try:
+    from rich import box
     from rich.console import Console
     from rich.panel import Panel
-    from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
-    from rich.prompt import Prompt, Confirm
+    from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
+    from rich.prompt import Confirm, Prompt
     from rich.table import Table
-    from rich import box
     from rich.tree import Tree
 except ImportError:
     def _plain(value):
@@ -128,60 +144,107 @@ except ImportError:
                     lines.append(f"  {line}")
             return "\n".join(lines)
 
-console = Console()
+try:
+    import questionary
+    from questionary import Choice
+    from questionary import Style as QuestionaryStyle
+except ImportError:
+    questionary = None
+    Choice = None
+    QuestionaryStyle = None
+
+try:
+    from prompt_toolkit import Application
+    from prompt_toolkit.key_binding import KeyBindings
+    from prompt_toolkit.layout import Layout
+    from prompt_toolkit.layout.containers import HSplit, Window
+    from prompt_toolkit.layout.controls import FormattedTextControl
+    from prompt_toolkit.styles import Style as PromptToolkitStyle
+except ImportError:
+    Application = None
+    KeyBindings = None
+    Layout = None
+    HSplit = None
+    Window = None
+    FormattedTextControl = None
+    PromptToolkitStyle = None
+
+
+@dataclass
+class DoctorIssue:
+    category: str
+    path: Path
+    detail: str
+    action: str
+
 
 class HooliganInstaller:
-    """Modern installer for hooliGAN-harness"""
+    """Installer and maintenance commands for hooliGAN-harness."""
 
-    def __init__(self):
-        self.console = Console()
-        self.source_dir = Path(__file__).parent
+    def __init__(self, source_dir: Optional[Path] = None, home: Optional[Path] = None, console: Optional[Console] = None):
+        self.console = console or Console()
+        self.source_dir = (source_dir or Path(__file__).parent).resolve()
+        self.home = (home or Path.home()).resolve()
         self.claude_path = self._get_claude_path()
         self.codex_path = self._get_codex_path()
         self.installed_files: List[Path] = []
         self.install_targets: List[str] = []
+        self.questionary_style = (
+            QuestionaryStyle(
+                [
+                    ("qmark", "fg:#ffb454 bold"),
+                    ("question", "fg:#e5e7eb bold"),
+                    ("answer", "fg:#7dd3fc bold"),
+                    ("pointer", "fg:#7dd3fc bold"),
+                    ("highlighted", "fg:#081018 bg:#7dd3fc bold"),
+                    ("selected", "fg:#7dd3fc bold"),
+                    ("instruction", "fg:#9ca3af italic"),
+                    ("text", "fg:#d1d5db"),
+                    ("disabled", "fg:#6b7280 italic"),
+                ]
+            )
+            if QuestionaryStyle is not None
+            else None
+        )
 
     def _get_claude_path(self) -> Dict[str, Path]:
-        """Detect Claude Code installation path"""
-        home = Path.home()
         return {
-            "global_skills": home / ".claude" / "skills" / "hooliGAN-harness",
-            "global_agents": home / ".claude" / "agents",
-            "config": home / ".claude"
+            "global_skills": self.home / ".claude" / "skills" / SKILL_NAME,
+            "global_agents": self.home / ".claude" / "agents",
+            "config": self.home / ".claude",
         }
 
     def _get_codex_path(self) -> Dict[str, Path]:
-        """Detect Codex installation path"""
-        home = Path.home()
         return {
-            "global_skills": home / ".codex" / "skills" / "hooliGAN-harness",
-            "config": home / ".codex"
+            "global_skills": self.home / ".codex" / "skills" / SKILL_NAME,
+            "config": self.home / ".codex",
         }
 
     def show_banner(self):
-        """Display beautiful welcome banner"""
         banner = Panel.fit(
-            "[bold magenta]hooliGAN-harness[/bold magenta] [cyan]v1.3.1[/cyan]\n\n"
+            f"[bold magenta]{SKILL_NAME}[/bold magenta] [cyan]v{VERSION}[/cyan]\n\n"
             "[italic]High-reliability engineering framework for AI code generation[/italic]\n"
             "[dim]Inspired by GAN architectures[/dim]",
             border_style="bright_blue",
             box=box.DOUBLE_EDGE,
             title="[bold yellow]⚡ Installation Wizard ⚡[/bold yellow]",
-            title_align="center"
+            title_align="center",
         )
         self.console.print(banner)
         self.console.print()
 
     def detect_claude(self) -> bool:
-        """Detect if Claude Code is installed"""
         return self.claude_path["config"].exists()
 
     def detect_codex(self) -> bool:
-        """Detect if Codex is installed"""
         return self.codex_path["config"].exists()
 
+    def is_installed(self, target: str) -> bool:
+        if target == "claude":
+            return (self.claude_path["global_skills"] / "SKILL.md").exists()
+        return (self.codex_path["global_skills"] / "SKILL.md").exists()
+
     def show_environment_status(self):
-        """Display detected environment"""
         claude_installed = self.detect_claude()
         codex_installed = self.detect_codex()
 
@@ -189,29 +252,21 @@ class HooliganInstaller:
             title="[bold cyan]🔍 Environment Detection[/bold cyan]",
             box=box.ROUNDED,
             show_header=True,
-            header_style="bold magenta"
+            header_style="bold magenta",
         )
-
         table.add_column("Environment", style="cyan", width=15)
         table.add_column("Status", width=20)
         table.add_column("Path", style="dim")
 
-        # Claude status
-        claude_status = "✅ Installed" if claude_installed else "❌ Not Found"
-        claude_style = "green" if claude_installed else "red"
         table.add_row(
             "Claude Code",
-            f"[{claude_style}]{claude_status}[/{claude_style}]",
-            str(self.claude_path["config"])
+            "[green]✅ Installed[/green]" if claude_installed else "[red]❌ Not Found[/red]",
+            str(self.claude_path["config"]),
         )
-
-        # Codex status
-        codex_status = "✅ Installed" if codex_installed else "❌ Not Found"
-        codex_style = "green" if codex_installed else "red"
         table.add_row(
             "Codex",
-            f"[{codex_style}]{codex_status}[/{codex_style}]",
-            str(self.codex_path["config"])
+            "[green]✅ Installed[/green]" if codex_installed else "[red]❌ Not Found[/red]",
+            str(self.codex_path["config"]),
         )
 
         self.console.print(table)
@@ -223,25 +278,164 @@ class HooliganInstaller:
             self.console.print("[dim]Expected locations: ~/.claude/ or ~/.codex/[/dim]")
             sys.exit(1)
 
+    def resolve_targets(self, explicit_targets: Optional[Sequence[str]] = None, prefer_installed: bool = False):
+        if explicit_targets:
+            self.install_targets = list(dict.fromkeys(explicit_targets))
+            return
+
+        if prefer_installed:
+            installed_targets = [target for target in ("claude", "codex") if self.is_installed(target)]
+            if installed_targets:
+                self.install_targets = installed_targets
+                return
+
+        self.choose_install_targets()
+
     def choose_install_targets(self):
-        """Choose which supported environments to install into"""
         claude_installed = self.detect_claude()
         codex_installed = self.detect_codex()
 
         if claude_installed and codex_installed:
-            target = Prompt.ask(
-                "\nWhere should hooliGAN-harness be installed?",
-                choices=["both", "claude", "codex"],
-                default="both"
+            target = self._select_option(
+                "Where should hooliGAN-harness be installed?",
+                [
+                    ("both", "Both", "Install into Claude Code and Codex"),
+                    ("claude", "Claude Code", "Install only into Claude Code"),
+                    ("codex", "Codex", "Install only into Codex"),
+                ],
+                default="both",
             )
             self.install_targets = ["claude", "codex"] if target == "both" else [target]
         elif claude_installed:
             self.install_targets = ["claude"]
-        else:
+        elif codex_installed:
             self.install_targets = ["codex"]
+        else:
+            self.install_targets = []
+
+    def _select_option(self, message: str, options: Sequence[tuple], default: str) -> str:
+        if Application is not None and KeyBindings is not None:
+            return self._run_terminal_select(message, options, default)
+
+        if questionary is not None:
+            choices = []
+            for option in options:
+                value, label = option[0], option[1]
+                description = option[2] if len(option) > 2 else None
+                choices.append(Choice(title=label, value=value, description=description))
+            selection = questionary.select(
+                message,
+                choices=choices,
+                default=default,
+                use_indicator=True,
+                qmark="◆",
+                pointer="➜",
+                style=self.questionary_style,
+                instruction="Use ↑/↓ to move and Enter to select",
+            ).ask()
+            if selection is not None:
+                return selection
+
+        fallback_choices = [value for value, _ in options]
+        return Prompt.ask(f"\n{message}", choices=fallback_choices, default=default)
+
+    def _run_terminal_select(self, message: str, options: Sequence[tuple], default: str) -> str:
+        option_values = [option[0] for option in options]
+        selected_index = option_values.index(default) if default in option_values else 0
+        result = {"value": option_values[selected_index]}
+
+        style = PromptToolkitStyle.from_dict(
+            {
+                "dialog": "bg:#111827",
+                "question": "fg:#f9fafb bold",
+                "pointer": "fg:#7dd3fc bold",
+                "selected": "fg:#081018 bg:#7dd3fc bold",
+                "description": "fg:#94a3b8",
+                "hint": "fg:#f59e0b italic",
+            }
+        )
+
+        def build_lines():
+            fragments = [
+                ("class:question", f"{message}\n"),
+                ("class:hint", "Space/Down: next   Up: previous   Enter: select\n\n"),
+            ]
+
+            for index, option in enumerate(options):
+                value, label = option[0], option[1]
+                description = option[2] if len(option) > 2 else None
+                is_selected = index == selected_index_holder[0]
+                pointer = "➜ " if is_selected else "  "
+                style_name = "class:selected" if is_selected else ""
+                fragments.append(("class:pointer" if is_selected else "", pointer))
+                fragments.append((style_name, label))
+                if description:
+                    fragments.append(("", "\n   "))
+                    fragments.append(("class:description", description))
+                fragments.append(("", "\n"))
+
+            return fragments
+
+        selected_index_holder = [selected_index]
+
+        control = FormattedTextControl(build_lines, focusable=True, show_cursor=False)
+        bindings = KeyBindings()
+
+        def move(delta: int):
+            selected_index_holder[0] = (selected_index_holder[0] + delta) % len(options)
+
+        @bindings.add(" ")
+        @bindings.add("down")
+        @bindings.add("tab")
+        @bindings.add("j")
+        def _next(event):
+            move(1)
+
+        @bindings.add("up")
+        @bindings.add("s-tab")
+        @bindings.add("k")
+        def _previous(event):
+            move(-1)
+
+        @bindings.add("enter")
+        def _accept(event):
+            result["value"] = options[selected_index_holder[0]][0]
+            event.app.exit(result=result["value"])
+
+        @bindings.add("c-c")
+        def _abort(event):
+            raise KeyboardInterrupt()
+
+        app = Application(
+            layout=Layout(
+                HSplit(
+                    [
+                        Window(content=control, always_hide_cursor=True),
+                    ]
+                )
+            ),
+            key_bindings=bindings,
+            full_screen=False,
+            style=style,
+        )
+        return app.run()
+
+    def _confirm_with_select(self, message: str, default: bool = True) -> bool:
+        if questionary is not None:
+            return (
+                self._select_option(
+                    message,
+                    [
+                        ("yes", "Proceed", "Continue with installation"),
+                        ("no", "Cancel", "Exit without making changes"),
+                    ],
+                    default="yes" if default else "no",
+                )
+                == "yes"
+            )
+        return Confirm.ask(message, default=default)
 
     def show_features(self):
-        """Display feature overview"""
         features_panel = Panel(
             "[bold green]✨ Features to Install:[/bold green]\n\n"
             "• [cyan]6 Personas[/cyan]: Planner, Architect, Designer, Generator, Evaluator, Security Evaluator\n"
@@ -253,13 +447,12 @@ class HooliganInstaller:
             "• [cyan]Enterprise Integrations[/cyan]: CI/CD, monitoring, security tools\n"
             "• [cyan]Living Documentation[/cyan]: Auto-generated and maintained docs",
             border_style="green",
-            box=box.ROUNDED
+            box=box.ROUNDED,
         )
         self.console.print(features_panel)
         self.console.print()
 
     def create_backup(self, target_path: Path) -> Optional[Path]:
-        """Create backup of existing installation"""
         if target_path.exists():
             backup_path = target_path.parent / f"{target_path.name}.backup.{datetime.now().strftime('%Y%m%d_%H%M%S')}"
             self.console.print(f"[yellow]📦 Creating backup at {backup_path}[/yellow]")
@@ -267,14 +460,50 @@ class HooliganInstaller:
             return backup_path
         return None
 
+    def _get_manifest_path(self, base_dir: Optional[Path] = None) -> Path:
+        return (base_dir or self.source_dir) / INSTALL_MANIFEST_PATH
+
+    def _get_canonical_source_checkout(self) -> Optional[Path]:
+        if (self.source_dir / ".git").exists():
+            return self.source_dir
+
+        manifest_path = self._get_manifest_path()
+        if not manifest_path.exists():
+            return None
+
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return None
+
+        source_checkout = manifest.get("source_checkout")
+        if not source_checkout:
+            return None
+
+        checkout_path = Path(source_checkout).expanduser()
+        return checkout_path if checkout_path.exists() else None
+
+    def _write_install_manifest(self, target: str, skills_dir: Path):
+        manifest_path = self._get_manifest_path(skills_dir)
+        manifest_path.parent.mkdir(parents=True, exist_ok=True)
+        manifest = {
+            "skill_name": SKILL_NAME,
+            "version": VERSION,
+            "target": target,
+            "source_checkout": str(self._get_canonical_source_checkout() or self.source_dir),
+            "installed_from": str(self.source_dir),
+            "installed_at": datetime.now().isoformat(timespec="seconds"),
+        }
+        manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+
     def install_files(self) -> bool:
-        """Install files with progress bar"""
         if not self.install_targets:
             self.choose_install_targets()
 
         target_label = " and ".join("Claude Code" if target == "claude" else "Codex" for target in self.install_targets)
         self.console.print(f"\n[bold cyan]🚀 Installing to {target_label}...[/bold cyan]")
 
+        self.installed_files = []
         for target in self.install_targets:
             if target == "claude":
                 self._install_claude_files()
@@ -284,8 +513,6 @@ class HooliganInstaller:
         return True
 
     def _install_claude_files(self):
-        """Install Claude Code skill and agent files"""
-        # Create directories
         skills_dir = self.claude_path["global_skills"]
         agents_dir = self.claude_path["global_agents"]
 
@@ -297,43 +524,29 @@ class HooliganInstaller:
             TextColumn("[progress.description]{task.description}"),
             BarColumn(),
             TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
-            console=self.console
+            console=self.console,
         ) as progress:
-
-            # Files to copy
             files_to_copy = [
                 ("SKILL.md", skills_dir / "SKILL.md"),
                 ("README.md", skills_dir / "README.md"),
+                ("INSTALL.md", skills_dir / "INSTALL.md"),
+                ("install.py", skills_dir / "install.py"),
                 (".harness", skills_dir / ".harness"),
-                ("personas/Planner.md", agents_dir / "harness-planner.md"),
-                ("personas/Architect.md", agents_dir / "harness-architect.md"),
-                ("personas/Designer.md", agents_dir / "harness-designer.md"),
-                ("personas/Generator.md", agents_dir / "harness-generator.md"),
-                ("personas/Evaluator.md", agents_dir / "harness-evaluator.md"),
-                ("personas/SecurityEvaluator.md", agents_dir / "harness-security-evaluator.md"),
+                ("personas", skills_dir / "personas"),
+                *[(f"personas/{source}", agents_dir / dest) for source, dest in CLAUDE_PERSONAS.items()],
             ]
 
             task = progress.add_task("[green]Installing files...", total=len(files_to_copy))
 
             for source, dest in files_to_copy:
-                source_path = self.source_dir / source
-
-                if source_path.is_dir():
-                    if dest.exists():
-                        shutil.rmtree(dest)
-                    shutil.copytree(source_path, dest)
-                else:
-                    dest.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.copy2(source_path, dest)
-
+                self._copy_path(self.source_dir / source, dest)
                 self.installed_files.append(dest)
                 progress.update(task, advance=1)
 
-        # Update skill registry
         self._update_skill_registry()
+        self._write_install_manifest("claude", skills_dir)
 
     def _install_codex_files(self):
-        """Install Codex skill files"""
         skills_dir = self.codex_path["global_skills"]
         skills_dir.mkdir(parents=True, exist_ok=True)
 
@@ -342,9 +555,8 @@ class HooliganInstaller:
             TextColumn("[progress.description]{task.description}"),
             BarColumn(),
             TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
-            console=self.console
+            console=self.console,
         ) as progress:
-
             files_to_copy = [
                 ("SKILL.md", skills_dir / "SKILL.md"),
                 ("README.md", skills_dir / "README.md"),
@@ -356,73 +568,66 @@ class HooliganInstaller:
             task = progress.add_task("[green]Installing Codex skill files...", total=len(files_to_copy))
 
             for source, dest in files_to_copy:
-                source_path = self.source_dir / source
-
-                if source_path.is_dir():
-                    if dest.exists():
-                        shutil.rmtree(dest)
-                    shutil.copytree(source_path, dest)
-                else:
-                    dest.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.copy2(source_path, dest)
-
+                self._copy_path(self.source_dir / source, dest)
                 self.installed_files.append(dest)
                 progress.update(task, advance=1)
 
-    def _update_skill_registry(self):
-        """Update skill registry for Claude Code"""
-        registry_file = self.claude_path["config"] / "skills.json"
+        self._write_install_manifest("codex", skills_dir)
 
+    def _copy_path(self, source: Path, dest: Path):
+        if source.is_dir():
+            if dest.exists():
+                shutil.rmtree(dest)
+            shutil.copytree(source, dest)
+            return
+
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, dest)
+
+    def _update_skill_registry(self):
+        registry_file = self.claude_path["config"] / "skills.json"
         if registry_file.exists():
-            with open(registry_file, 'r') as f:
-                registry = json.load(f)
+            with registry_file.open("r", encoding="utf-8") as handle:
+                registry = json.load(handle)
         else:
             registry = {"skills": []}
 
-        # Add hooliGAN-harness if not already present
         skill_entry = {
-            "name": "hooliGAN-harness",
+            "name": SKILL_NAME,
             "path": str(self.claude_path["global_skills"]),
-            "version": "1.3.1",
-            "description": "High-reliability engineering framework with adversarial evaluation"
+            "version": VERSION,
+            "description": "High-reliability engineering framework with adversarial evaluation",
         }
 
-        # Remove old entry if exists
-        registry["skills"] = [s for s in registry.get("skills", []) if s.get("name") != "hooliGAN-harness"]
+        registry["skills"] = [entry for entry in registry.get("skills", []) if entry.get("name") != SKILL_NAME]
         registry["skills"].append(skill_entry)
 
-        with open(registry_file, 'w') as f:
-            json.dump(registry, f, indent=2)
+        with registry_file.open("w", encoding="utf-8") as handle:
+            json.dump(registry, handle, indent=2)
 
     def show_installation_tree(self):
-        """Display installed files as a tree"""
         tree = Tree("[bold green]📁 Installed Files[/bold green]")
 
-        # Group files by directory
-        file_groups = {}
+        file_groups: Dict[str, List[str]] = {}
         for file_path in self.installed_files:
-            parent = str(file_path.parent)
-            if parent not in file_groups:
-                file_groups[parent] = []
-            file_groups[parent].append(file_path.name)
+            file_groups.setdefault(str(file_path.parent), []).append(file_path.name)
 
         for directory, files in file_groups.items():
-            dir_branch = tree.add(f"[cyan]{directory}[/cyan]")
-            for file in files:
-                if file.endswith('.md'):
-                    dir_branch.add(f"[green]📄 {file}[/green]")
-                elif file.endswith('.yaml'):
-                    dir_branch.add(f"[yellow]⚙️ {file}[/yellow]")
+            branch = tree.add(f"[cyan]{directory}[/cyan]")
+            for file_name in files:
+                if file_name.endswith(".md"):
+                    branch.add(f"[green]📄 {file_name}[/green]")
+                elif file_name.endswith(".yaml"):
+                    branch.add(f"[yellow]⚙️ {file_name}[/yellow]")
                 else:
-                    dir_branch.add(f"[blue]📁 {file}[/blue]")
+                    branch.add(f"[blue]📁 {file_name}[/blue]")
 
         self.console.print(tree)
 
     def show_usage_instructions(self):
-        """Display usage instructions"""
         usage_lines = []
         if "claude" in self.install_targets:
-            usage_lines.append("Claude Code: [yellow]/harness \"Your feature request\"[/yellow]")
+            usage_lines.append('Claude Code: [yellow]/harness "Your feature request"[/yellow]')
         if "codex" in self.install_targets:
             usage_lines.append("Codex: ask Codex to use the [yellow]hooliGAN-harness[/yellow] skill, for example:")
             usage_lines.append("   [yellow]Use hooliGAN-harness to add user authentication with JWT[/yellow]")
@@ -430,63 +635,54 @@ class HooliganInstaller:
         instructions = Panel(
             "[bold green]✅ Installation Complete![/bold green]\n\n"
             "[bold cyan]To use hooliGAN-harness:[/bold cyan]\n\n"
-            + "\n".join(usage_lines) + "\n\n"
-            "[bold cyan]Example:[/bold cyan]\n"
-            "   [yellow]Use hooliGAN-harness to add user authentication with JWT[/yellow]\n\n"
-            "[bold cyan]The framework will:[/bold cyan]\n"
-            "• Create a structured plan\n"
-            "• Review architecture before coding\n"
-            "• Generate implementation\n"
-            "• Run parallel security & functional evaluation\n"
-            "• Learn from any failures\n"
-            "• Auto-generate documentation",
+            + "\n".join(usage_lines)
+            + "\n\n"
+            + "[bold cyan]Maintenance in Claude/Codex:[/bold cyan]\n"
+            + "   [yellow]/harness update[/yellow]\n"
+            + "   [yellow]/harness doctor[/yellow]\n"
+            + "   [yellow]Use hooliGAN-harness to update[/yellow]\n"
+            + "   [yellow]Use hooliGAN-harness to run doctor[/yellow]\n\n"
+            + "[bold cyan]The framework will:[/bold cyan]\n"
+            + "• Create a structured plan\n"
+            + "• Review architecture before coding\n"
+            + "• Generate implementation\n"
+            + "• Run parallel security & functional evaluation\n"
+            + "• Learn from any failures\n"
+            + "• Auto-generate documentation",
             border_style="green",
             box=box.DOUBLE,
             title="[bold]🎉 Success![/bold]",
-            title_align="center"
+            title_align="center",
         )
         self.console.print(instructions)
 
     def uninstall(self) -> bool:
-        """Uninstall hooliGAN-harness"""
         self.console.print("[bold red]🗑️  Uninstalling hooliGAN-harness...[/bold red]")
 
         if not self.install_targets:
-            self.choose_install_targets()
+            self.resolve_targets(prefer_installed=True)
 
         if "claude" in self.install_targets:
             skills_dir = self.claude_path["global_skills"]
             agents_dir = self.claude_path["global_agents"]
 
-            # Remove persona files
-            persona_files = [
-                "harness-planner.md",
-                "harness-architect.md",
-                "harness-designer.md",
-                "harness-generator.md",
-                "harness-evaluator.md",
-                "harness-security-evaluator.md"
-            ]
-
-            for persona in persona_files:
-                persona_path = agents_dir / persona
+            for persona_name in CLAUDE_PERSONAS.values():
+                persona_path = agents_dir / persona_name
                 if persona_path.exists():
                     persona_path.unlink()
-                    self.console.print(f"[red]Removed {persona}[/red]")
+                    self.console.print(f"[red]Removed {persona_name}[/red]")
 
-            # Remove skills directory
             if skills_dir.exists():
                 shutil.rmtree(skills_dir)
                 self.console.print(f"[red]Removed {skills_dir}[/red]")
 
-            # Update registry
             registry_file = self.claude_path["config"] / "skills.json"
             if registry_file.exists():
-                with open(registry_file, 'r') as f:
-                    registry = json.load(f)
-                registry["skills"] = [s for s in registry.get("skills", []) if s.get("name") != "hooliGAN-harness"]
-                with open(registry_file, 'w') as f:
-                    json.dump(registry, f, indent=2)
+                with registry_file.open("r", encoding="utf-8") as handle:
+                    registry = json.load(handle)
+                registry["skills"] = [entry for entry in registry.get("skills", []) if entry.get("name") != SKILL_NAME]
+                with registry_file.open("w", encoding="utf-8") as handle:
+                    json.dump(registry, handle, indent=2)
 
         if "codex" in self.install_targets:
             skills_dir = self.codex_path["global_skills"]
@@ -497,73 +693,378 @@ class HooliganInstaller:
         self.console.print("[green]✅ Uninstallation complete![/green]")
         return True
 
-    def run(self):
-        """Main installation flow"""
-        try:
-            # Welcome
-            self.show_banner()
+    def doctor(self, apply_fixes: bool = True) -> bool:
+        self.console.print("[bold cyan]🩺 Running hooliGAN-harness doctor...[/bold cyan]")
+        issues = self._collect_doctor_issues()
 
-            # Detect environment
-            self.show_environment_status()
+        if not issues:
+            self.console.print("[green]✅ Installation looks healthy.[/green]")
+            return True
+
+        for issue in issues:
+            self.console.print(f"[yellow]• {issue.category}: {issue.detail} ({issue.path})[/yellow]")
+
+        if not apply_fixes:
+            self.console.print("[yellow]Dry run only. No changes were applied.[/yellow]")
+            return False
+
+        if not self.install_targets:
+            self.resolve_targets(prefer_installed=True)
+
+        for issue in issues:
+            self._apply_doctor_issue(issue)
+
+        repair_targets = [target for target in self.install_targets if self.is_installed(target)]
+        if repair_targets:
+            self.install_targets = repair_targets
+            self.console.print("[cyan]Reinstalling canonical files to repair the installation...[/cyan]")
+            self.install_files()
+
+        self.console.print("[green]✅ Doctor completed repairs.[/green]")
+        return True
+
+    def _collect_doctor_issues(self) -> List[DoctorIssue]:
+        issues: List[DoctorIssue] = []
+        issues.extend(self._find_duplicate_skill_dirs(self.home / ".claude" / "skills"))
+        issues.extend(self._find_duplicate_skill_dirs(self.home / ".codex" / "skills"))
+        issues.extend(self._find_missing_installation_files())
+        issues.extend(self._find_stale_personas())
+        issues.extend(self._find_registry_duplicates())
+        return issues
+
+    def _find_duplicate_skill_dirs(self, parent: Path) -> List[DoctorIssue]:
+        if not parent.exists():
+            return []
+
+        issues = []
+        for child in parent.iterdir():
+            if not child.is_dir() or not self._is_auto_repair_duplicate_name(child.name):
+                continue
+            issues.append(
+                DoctorIssue(
+                    category="duplicate_installation",
+                    path=child,
+                    detail="duplicate harness installation directory detected",
+                    action="remove_tree",
+                )
+            )
+        return issues
+
+    def _is_auto_repair_duplicate_name(self, name: str) -> bool:
+        if name == SKILL_NAME:
+            return False
+        duplicate_markers = [
+            ".backup.",
+            ".bak",
+            "-backup",
+            "_backup",
+            " copy",
+            "-copy",
+            "_copy",
+            "(copy)",
+        ]
+        return name.startswith(SKILL_NAME) and any(marker in name for marker in duplicate_markers)
+
+    def _find_missing_installation_files(self) -> List[DoctorIssue]:
+        issues = []
+        if self.claude_path["global_skills"].exists():
+            for name in CLAUDE_REQUIRED_FILES:
+                path = self.claude_path["global_skills"] / name
+                if not path.exists():
+                    issues.append(
+                        DoctorIssue(
+                            category="missing_file",
+                            path=path,
+                            detail=f"missing Claude installation file: {name}",
+                            action="reinstall_claude",
+                        )
+                    )
+        if self.codex_path["global_skills"].exists():
+            for name in CODEX_REQUIRED_FILES:
+                path = self.codex_path["global_skills"] / name
+                if not path.exists():
+                    issues.append(
+                        DoctorIssue(
+                            category="missing_file",
+                            path=path,
+                            detail=f"missing Codex installation file: {name}",
+                            action="reinstall_codex",
+                        )
+                    )
+        return issues
+
+    def _find_stale_personas(self) -> List[DoctorIssue]:
+        agents_dir = self.claude_path["global_agents"]
+        if not agents_dir.exists():
+            return []
+
+        issues = []
+        for persona_name in CLAUDE_PERSONAS.values():
+            persona_path = agents_dir / persona_name
+            if persona_path.exists() and not self.claude_path["global_skills"].exists():
+                issues.append(
+                    DoctorIssue(
+                        category="orphaned_persona",
+                        path=persona_path,
+                        detail=f"persona file exists without installed Claude skill: {persona_name}",
+                        action="remove_file",
+                    )
+                )
+        return issues
+
+    def _find_registry_duplicates(self) -> List[DoctorIssue]:
+        registry_file = self.claude_path["config"] / "skills.json"
+        if not registry_file.exists():
+            return []
+
+        with registry_file.open("r", encoding="utf-8") as handle:
+            registry = json.load(handle)
+        entries = [entry for entry in registry.get("skills", []) if entry.get("name") == SKILL_NAME]
+        if len(entries) <= 1:
+            return []
+        return [
+            DoctorIssue(
+                category="registry_duplicate",
+                path=registry_file,
+                detail=f"skills.json contains {len(entries)} harness entries",
+                action="dedupe_registry",
+            )
+        ]
+
+    def _apply_doctor_issue(self, issue: DoctorIssue):
+        if issue.action == "remove_tree" and issue.path.exists():
+            shutil.rmtree(issue.path)
+            return
+        if issue.action == "remove_file" and issue.path.exists():
+            issue.path.unlink()
+            return
+        if issue.action == "dedupe_registry":
+            self._update_skill_registry()
+            return
+        if issue.action == "reinstall_claude" and "claude" not in self.install_targets:
+            self.install_targets.append("claude")
+            return
+        if issue.action == "reinstall_codex" and "codex" not in self.install_targets:
+            self.install_targets.append("codex")
+
+    def update_installation(self, force: bool = False, target_ref: str = "main") -> bool:
+        self.console.print("[bold cyan]⬆️  Updating hooliGAN-harness from GitHub...[/bold cyan]")
+        if not (self.source_dir / ".git").exists():
+            return self._delegate_update_to_source_checkout(force=force, target_ref=target_ref)
+
+        self._refresh_repository(target_ref=target_ref, force=force)
+
+        self.resolve_targets(prefer_installed=True)
+        if not self.install_targets:
+            self.console.print("[yellow]No existing installation found. Running a fresh install instead.[/yellow]")
             self.choose_install_targets()
 
-            # Check if already installed
-            already_installed = any(
-                (self.claude_path["global_skills"] / "SKILL.md").exists() if target == "claude"
-                else (self.codex_path["global_skills"] / "SKILL.md").exists()
-                for target in self.install_targets
+        for target in self.install_targets:
+            if target == "claude":
+                self.create_backup(self.claude_path["global_skills"])
+            elif target == "codex":
+                self.create_backup(self.codex_path["global_skills"])
+
+        self.install_files()
+        self.console.print("[green]✅ Update complete.[/green]")
+        return True
+
+    def _delegate_update_to_source_checkout(self, force: bool, target_ref: str) -> bool:
+        source_checkout = self._get_canonical_source_checkout()
+        if not source_checkout:
+            raise RuntimeError(
+                "This installed skill does not know where the original hooliGAN-harness checkout lives. "
+                "Run update from a cloned repository checkout."
             )
 
-            if already_installed:
-                self.console.print(f"[yellow]⚠️  hooliGAN-harness is already installed[/yellow]")
+        source_install = source_checkout / "install.py"
+        if not source_install.exists():
+            raise RuntimeError(f"Expected installer not found at {source_install}")
 
-                action = Prompt.ask(
-                    "\nWhat would you like to do?",
-                    choices=["reinstall", "uninstall", "cancel"],
-                    default="cancel"
-                )
+        command = [sys.executable, str(source_install), "update", "--ref", target_ref]
+        if force:
+            command.append("--force")
 
-                if action == "cancel":
-                    self.console.print("[yellow]Installation cancelled.[/yellow]")
-                    return
-                elif action == "uninstall":
-                    self.uninstall()
-                    return
-                elif action == "reinstall":
-                    # Create backup before reinstalling
-                    if "claude" in self.install_targets:
-                        self.create_backup(self.claude_path["global_skills"])
-                    if "codex" in self.install_targets:
-                        self.create_backup(self.codex_path["global_skills"])
+        result = subprocess.run(command, text=True, capture_output=True)
+        if result.stdout.strip():
+            self.console.print(result.stdout.strip())
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr.strip() or "Delegated update failed.")
+        return True
 
-            # Show features
-            self.show_features()
+    def _refresh_repository(self, target_ref: str, force: bool):
+        git_dir = self.source_dir / ".git"
+        if not git_dir.exists():
+            raise RuntimeError("Updater must be run from a cloned hooliGAN-harness repository.")
 
-            # Confirm installation
-            if not Confirm.ask(f"\n[bold cyan]Proceed with installation?[/bold cyan]", default=True):
+        current_branch = self._git_output(["git", "branch", "--show-current"]).strip()
+        if current_branch != target_ref and not force:
+            raise RuntimeError(
+                f"Updater expects the local checkout to be on '{target_ref}' (found '{current_branch}'). "
+                "Use --force if you want to update anyway."
+            )
+
+        status = self._git_output(["git", "status", "--porcelain"])
+        if status.strip() and not force:
+            raise RuntimeError("Working tree has local changes. Commit or stash them before running update, or use --force.")
+
+        self._run_git(["git", "fetch", "origin", target_ref])
+        self._run_git(["git", "checkout", target_ref])
+        self._run_git(["git", "pull", "--ff-only", "origin", target_ref])
+
+    def _git_output(self, command: Sequence[str]) -> str:
+        result = subprocess.run(
+            command,
+            cwd=self.source_dir,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return result.stdout
+
+    def _run_git(self, command: Sequence[str]):
+        result = subprocess.run(command, cwd=self.source_dir, text=True, capture_output=True)
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr.strip() or "Git command failed.")
+        if result.stdout.strip():
+            self.console.print(result.stdout.strip())
+
+    def interactive_install(self):
+        self.show_banner()
+        self.show_environment_status()
+        self.choose_install_targets()
+
+        already_installed = any(self.is_installed(target) for target in self.install_targets)
+        if already_installed:
+            self.console.print(f"[yellow]⚠️  {SKILL_NAME} is already installed[/yellow]")
+            action = self._select_option(
+                "What would you like to do?",
+                [
+                    ("reinstall", "Reinstall", "Replace installed files from this checkout"),
+                    ("uninstall", "Uninstall", "Remove the installed harness"),
+                    ("cancel", "Cancel", "Exit without changing the installation"),
+                ],
+                default="cancel",
+            )
+
+            if action == "cancel":
                 self.console.print("[yellow]Installation cancelled.[/yellow]")
                 return
+            if action == "uninstall":
+                self.uninstall()
+                return
+            if action == "reinstall":
+                for target in self.install_targets:
+                    if target == "claude":
+                        self.create_backup(self.claude_path["global_skills"])
+                    elif target == "codex":
+                        self.create_backup(self.codex_path["global_skills"])
 
-            # Install
-            if self.install_files():
-                self.console.print("\n[bold green]✨ Installation successful![/bold green]")
-                self.show_installation_tree()
-                self.show_usage_instructions()
-            else:
-                self.console.print("[bold red]❌ Installation failed![/bold red]")
-                sys.exit(1)
+        self.show_features()
+        if not self._confirm_with_select("[bold cyan]Proceed with installation?[/bold cyan]", default=True):
+            self.console.print("[yellow]Installation cancelled.[/yellow]")
+            return
 
-        except KeyboardInterrupt:
-            self.console.print("\n[yellow]Installation cancelled by user.[/yellow]")
-            sys.exit(0)
-        except Exception as e:
-            self.console.print(f"\n[bold red]❌ Error: {e}[/bold red]")
-            sys.exit(1)
+        if self.install_files():
+            self.console.print("\n[bold green]✨ Installation successful![/bold green]")
+            self.show_installation_tree()
+            self.show_usage_instructions()
+            return
 
-def main():
-    """Entry point"""
+        self.console.print("[bold red]❌ Installation failed![/bold red]")
+        sys.exit(1)
+
+
+def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Install and maintain hooliGAN-harness.")
+    parser.add_argument(
+        "command",
+        nargs="?",
+        choices=["install", "uninstall", "update", "doctor"],
+        default="install",
+        help="command to run",
+    )
+    parser.add_argument(
+        "--target",
+        choices=["claude", "codex", "both"],
+        help="install target override",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="allow updater to proceed with a dirty checkout or non-main branch",
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="for doctor, report issues without applying fixes",
+    )
+    parser.add_argument(
+        "--ref",
+        default="main",
+        help="git ref used by update (default: main)",
+    )
+    return parser.parse_args(argv)
+
+
+def normalize_targets(target: Optional[str]) -> Optional[List[str]]:
+    if not target:
+        return None
+    if target == "both":
+        return ["claude", "codex"]
+    return [target]
+
+
+def main(argv: Optional[Sequence[str]] = None):
+    args = parse_args(argv)
     installer = HooliganInstaller()
-    installer.run()
+
+    try:
+        explicit_targets = normalize_targets(args.target)
+        if args.command == "install":
+            if explicit_targets:
+                installer.show_banner()
+                installer.show_environment_status()
+                installer.resolve_targets(explicit_targets=explicit_targets)
+                installer.show_features()
+                if installer._confirm_with_select("[bold cyan]Proceed with installation?[/bold cyan]", default=True):
+                    installer.install_files()
+                    installer.console.print("\n[bold green]✨ Installation successful![/bold green]")
+                    installer.show_installation_tree()
+                    installer.show_usage_instructions()
+                else:
+                    installer.console.print("[yellow]Installation cancelled.[/yellow]")
+            else:
+                installer.interactive_install()
+            return
+
+        installer.resolve_targets(explicit_targets=explicit_targets, prefer_installed=True)
+
+        if args.command == "uninstall":
+            installer.uninstall()
+        elif args.command == "doctor":
+            installer.doctor(apply_fixes=not args.check)
+        elif args.command == "update":
+            installer.update_installation(force=args.force, target_ref=args.ref)
+    except KeyboardInterrupt:
+        installer.console.print("\n[yellow]Operation cancelled by user.[/yellow]")
+        sys.exit(0)
+    except Exception as exc:
+        installer.console.print(f"\n[bold red]❌ Error: {exc}[/bold red]")
+        sys.exit(1)
+
+
+def install_main():
+    main(["install"])
+
+
+def update_main():
+    main(["update"])
+
+
+def doctor_main():
+    main(["doctor"])
+
 
 if __name__ == "__main__":
     main()

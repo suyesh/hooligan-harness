@@ -96,5 +96,3 @@ uv run python install.py
 
 echo ""
 echo -e "${GREEN}${BOLD}✨ Setup complete!${NC}"
-echo -e "${CYAN}To reinstall or uninstall later, run:${NC}"
-echo -e "  ${YELLOW}./setup.sh${NC}"

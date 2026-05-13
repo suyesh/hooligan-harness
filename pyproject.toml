@@ -6,10 +6,13 @@ readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
     "rich>=13.0.0",
+    "questionary>=2.0.1",
 ]
 
 [project.scripts]
-hooligan-install = "install:main"
+hooligan-install = "install:install_main"
+hooligan-update = "install:update_main"
+hooligan-doctor = "install:doctor_main"
 
 [build-system]
 requires = ["hatchling"]

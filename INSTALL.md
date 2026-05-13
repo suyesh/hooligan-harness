@@ -86,12 +86,16 @@ Claude Code:
 
 ```bash
 /harness "Add user authentication with JWT and rate limiting"
+/harness update
+/harness doctor
 ```
 
 Codex:
 
 ```text
 Use hooliGAN-harness to add user authentication with JWT and rate limiting
+Use hooliGAN-harness to update
+Use hooliGAN-harness to run doctor
 ```
 
 The framework will:
@@ -122,13 +126,32 @@ Edit `.harness/integrations/external-tools.yaml` to enable:
 ### Adjust Confidence Thresholds
 Edit `.harness/knowledge/confidence-scoring.yaml` to customize validation levels.
 
+## Maintenance
+
+Run maintenance through the installed skill, not through the setup wrapper.
+
+Claude Code:
+
+```bash
+/harness update
+/harness doctor
+```
+
+Codex:
+
+```text
+Use hooliGAN-harness to update
+Use hooliGAN-harness to run doctor
+```
+
+`update` refreshes the canonical `hooligan-harness` repository checkout from `origin/main`, then reinstalls the skill. `doctor` removes duplicate backup/copy installs, fixes Claude registry duplication, removes orphaned persona files, and repairs missing installed files.
+
 ## Uninstallation
 
 To remove hooliGAN-harness:
 
 ```bash
-# Run the installer and select 'uninstall'
-uv run python install.py
+uv run python install.py uninstall
 ```
 
 Or manually remove:

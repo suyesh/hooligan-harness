@@ -1,0 +1,56 @@
+task:
+  id: harness-maintenance-updater-doctor
+  nickname: harness-maintenance
+  summary: "Add updater and doctor commands to the hooliGAN-harness installer."
+  created_at: "2026-05-13"
+  confidence:
+    score: 62
+    level: development
+    rationale: "Moderate CLI refactor across installer, setup wrappers, docs, and tests."
+  acceptance_criteria:
+    - id: ac1
+      description: "Installer exposes explicit update and doctor commands in addition to install/uninstall."
+      status: done
+    - id: ac2
+      description: "Update refreshes the local harness checkout from GitHub main and reinstalls from the refreshed source."
+      status: done
+    - id: ac3
+      description: "Doctor detects duplicate installations, stale Claude registry entries, and missing installed files, then repairs them."
+      status: done
+    - id: ac4
+      description: "User-facing docs and setup entry points describe the new maintenance commands."
+      status: done
+    - id: ac5
+      description: "Automated tests cover updater safety gates and doctor repair behavior."
+      status: done
+  tasks:
+    - id: plan
+      title: "Define installer command model and maintenance scope"
+      status: done
+    - id: architecture-review
+      title: "Review updater source-of-truth and repair strategy"
+      status: done
+      notes:
+        - "Updater operates on the repository checkout, not installed skill directories."
+        - "Doctor only auto-removes canonical duplicate directories and repairs via reinstall."
+    - id: implement-installer
+      title: "Refactor install.py for install, update, doctor, uninstall"
+      status: done
+      depends_on: [plan, architecture-review]
+    - id: docs-and-wrappers
+      title: "Update setup scripts and documentation"
+      status: done
+      depends_on: [implement-installer]
+    - id: maintenance-intents
+      title: "Support update and doctor as skill maintenance intents in Claude and Codex"
+      status: done
+      depends_on: [implement-installer]
+    - id: verification
+      title: "Run tests and review security implications"
+      status: done
+      depends_on: [implement-installer, docs-and-wrappers, maintenance-intents]
+  rollback_strategy:
+    approach: "Revert installer/docs/tests changes as a single atomic patch if verification fails."
+    risk_points:
+      - "Updater running on a dirty or non-main checkout"
+      - "Doctor accidentally deleting non-canonical directories"

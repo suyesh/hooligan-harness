@@ -61,5 +61,4 @@ if errorlevel 1 (
 
 echo.
 echo ✨ Setup complete!
-echo To reinstall or uninstall later, run: setup.bat
 pause

@@ -18,6 +18,22 @@ This skill is portable across Claude Code and Codex.
 * Codex should use its native plan, terminal, file-editing, subagent, and browser tools where available. Do not require Claude-specific slash commands or agent paths when running in Codex.
 * Treat `.harness/` files as project-local working artifacts. If they do not exist in the target repository, create them from the skill defaults.
 
+### Maintenance Intents
+
+If the request is a harness maintenance command rather than feature work, do **not** run the full planning / generator / evaluator loop.
+
+Maintenance intents include:
+
+* Claude Code: `/harness update`, `/harness doctor`
+* Codex: `Use hooliGAN-harness to update`, `Use hooliGAN-harness to run doctor`, or equivalent wording
+
+For these intents:
+
+* Run the installed skill's `install.py` maintenance command directly when available.
+* `update` should execute the installer update flow, which refreshes the canonical hooliGAN-harness checkout from `origin/main` and reinstalls the skill.
+* `doctor` should execute the installer doctor flow, which scans for duplicate or broken installations and repairs them.
+* Only fall back to the feature-work phases below when the request is clearly about implementing or modifying application code.
+
 ### 1. Phase 0: Initialization
 
 * Read the repository README.md to understand the environment.

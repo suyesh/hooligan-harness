@@ -140,11 +140,25 @@ Once installed, trigger the harness in your coding agent session - **no configur
 /harness "Add user authentication with JWT"
 ```
 
+Maintenance shortcuts:
+
+```bash
+/harness update
+/harness doctor
+```
+
 ### Codex
 Ask Codex to use the installed skill by name:
 
 ```text
 Use hooliGAN-harness to add user authentication with JWT
+```
+
+Maintenance requests:
+
+```text
+Use hooliGAN-harness to update
+Use hooliGAN-harness to run doctor
 ```
 
 ### Complex Features
@@ -156,6 +170,21 @@ Use hooliGAN-harness to build a REST API with rate limiting, caching, and OpenAP
 ```text
 Use hooliGAN-harness to refactor the payment system to use the Repository pattern with 95% test coverage
 ```
+
+### Installer Maintenance
+After installation, maintenance is exposed through the skill itself:
+
+```bash
+/harness update
+/harness doctor
+```
+
+```text
+Use hooliGAN-harness to update
+Use hooliGAN-harness to run doctor
+```
+
+`update` refreshes the canonical repository checkout from `origin/main`, then reinstalls the harness to existing targets. `doctor` scans for duplicate skill directories, stale Claude persona files, duplicate Claude registry entries, and missing installed files, then repairs them.
 
 ---
 
