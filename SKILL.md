@@ -30,7 +30,7 @@ Maintenance intents include:
 For these intents:
 
 * Run the installed skill's `install.py` maintenance command directly when available.
-* `update` should execute the installer update flow, which refreshes the canonical hooliGAN-harness checkout from `origin/main` and reinstalls the skill.
+* `update` should execute the installer update flow, which downloads the latest hooliGAN-harness archive from GitHub over HTTPS for the requested ref and reinstalls the skill.
 * `doctor` should execute the installer doctor flow, which scans for duplicate or broken installations and repairs them.
 * Only fall back to the feature-work phases below when the request is clearly about implementing or modifying application code.
 

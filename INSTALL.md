@@ -144,7 +144,7 @@ Use hooliGAN-harness to update
 Use hooliGAN-harness to run doctor
 ```
 
-`update` refreshes the canonical `hooligan-harness` repository checkout from `origin/main`, then reinstalls the skill. `doctor` removes duplicate backup/copy installs, fixes Claude registry duplication, removes orphaned persona files, and repairs missing installed files.
+`update` downloads the latest `hooligan-harness` archive from GitHub over HTTPS for the requested ref, then reinstalls the skill. `doctor` removes duplicate backup/copy installs, fixes Claude registry duplication, removes orphaned persona files, and repairs missing installed files.
 
 ## Uninstallation
 

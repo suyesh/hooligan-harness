@@ -184,7 +184,7 @@ Use hooliGAN-harness to update
 Use hooliGAN-harness to run doctor
 ```
 
-`update` refreshes the canonical repository checkout from `origin/main`, then reinstalls the harness to existing targets. `doctor` scans for duplicate skill directories, stale Claude persona files, duplicate Claude registry entries, and missing installed files, then repairs them.
+`update` downloads the latest harness archive from GitHub over HTTPS for the requested ref, then reinstalls the harness to existing targets. `doctor` scans for duplicate skill directories, stale Claude persona files, duplicate Claude registry entries, and missing installed files, then repairs them.
 
 ---
 
