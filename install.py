@@ -4,18 +4,23 @@ hooliGAN-harness installer and maintenance CLI.
 """
 
 import argparse
+import io
 import json
 import re
 import shutil
 import subprocess
 import sys
+import tempfile
+import zipfile
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence
+from urllib.request import urlopen
 
 VERSION = "1.3.1"
 SKILL_NAME = "hooliGAN-harness"
+DEFAULT_REPOSITORY_URL = "https://github.com/aditikilledar/hooligan-harness"
 INSTALL_MANIFEST_PATH = Path(".harness") / "install-manifest.json"
 CLAUDE_PERSONAS = {
     "Planner.md": "harness-planner.md",
@@ -219,6 +224,54 @@ class HooliganInstaller:
             "global_skills": self.home / ".codex" / "skills" / SKILL_NAME,
             "config": self.home / ".codex",
         }
+
+    def _get_backup_root(self, target_path: Path) -> Path:
+        if str(target_path).startswith(str(self.claude_path["config"])):
+            return self.claude_path["config"] / "backups" / SKILL_NAME
+        if str(target_path).startswith(str(self.codex_path["config"])):
+            return self.codex_path["config"] / "backups" / SKILL_NAME
+        return self.source_dir / ".harness" / "backups"
+
+    def _read_install_manifest(self, base_dir: Optional[Path] = None) -> Optional[dict]:
+        manifest_path = self._get_manifest_path(base_dir)
+        if not manifest_path.exists():
+            return None
+        try:
+            return json.loads(manifest_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return None
+
+    def _normalize_repository_url(self, remote_url: str) -> str:
+        remote_url = remote_url.strip()
+
+        ssh_match = re.match(r"git@github\.com:(?P<slug>.+?)(?:\.git)?$", remote_url)
+        if ssh_match:
+            return f"https://github.com/{ssh_match.group('slug')}"
+
+        ssh_proto_match = re.match(r"ssh://git@github\.com/(?P<slug>.+?)(?:\.git)?$", remote_url)
+        if ssh_proto_match:
+            return f"https://github.com/{ssh_proto_match.group('slug')}"
+
+        https_match = re.match(r"https://github\.com/(?P<slug>.+?)(?:\.git)?/?$", remote_url)
+        if https_match:
+            return f"https://github.com/{https_match.group('slug')}"
+
+        return remote_url.removesuffix(".git").rstrip("/")
+
+    def _get_repository_url(self) -> str:
+        if (self.source_dir / ".git").exists():
+            try:
+                remote_url = self._git_output(["git", "config", "--get", "remote.origin.url"]).strip()
+                if remote_url:
+                    return self._normalize_repository_url(remote_url)
+            except Exception:
+                pass
+
+        manifest = self._read_install_manifest()
+        if manifest and manifest.get("repository_url"):
+            return manifest["repository_url"]
+
+        return DEFAULT_REPOSITORY_URL
 
     def show_banner(self):
         banner = Panel.fit(
@@ -454,11 +507,35 @@ class HooliganInstaller:
 
     def create_backup(self, target_path: Path) -> Optional[Path]:
         if target_path.exists():
-            backup_path = target_path.parent / f"{target_path.name}.backup.{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            backup_root = self._get_backup_root(target_path)
+            backup_root.mkdir(parents=True, exist_ok=True)
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            backup_path = backup_root / f"{target_path.name}.{timestamp}"
             self.console.print(f"[yellow]📦 Creating backup at {backup_path}[/yellow]")
             shutil.copytree(target_path, backup_path)
             return backup_path
         return None
+
+    def _cleanup_legacy_sibling_backups(self, target_path: Path):
+        parent = target_path.parent
+        if not parent.exists():
+            return
+
+        backup_root = self._get_backup_root(target_path)
+        backup_root.mkdir(parents=True, exist_ok=True)
+
+        for child in parent.iterdir():
+            if child == target_path or not child.is_dir():
+                continue
+            if not self._is_auto_repair_duplicate_name(child.name):
+                continue
+            destination = backup_root / child.name
+            counter = 1
+            while destination.exists():
+                destination = backup_root / f"{child.name}-{counter}"
+                counter += 1
+            self.console.print(f"[yellow]📦 Moving legacy backup out of skills directory: {child} -> {destination}[/yellow]")
+            shutil.move(str(child), str(destination))
 
     def _get_manifest_path(self, base_dir: Optional[Path] = None) -> Path:
         return (base_dir or self.source_dir) / INSTALL_MANIFEST_PATH
@@ -491,6 +568,7 @@ class HooliganInstaller:
             "version": VERSION,
             "target": target,
             "source_checkout": str(self._get_canonical_source_checkout() or self.source_dir),
+            "repository_url": self._get_repository_url(),
             "installed_from": str(self.source_dir),
             "installed_at": datetime.now().isoformat(timespec="seconds"),
         }
@@ -516,6 +594,7 @@ class HooliganInstaller:
         skills_dir = self.claude_path["global_skills"]
         agents_dir = self.claude_path["global_agents"]
 
+        self._cleanup_legacy_sibling_backups(skills_dir)
         skills_dir.mkdir(parents=True, exist_ok=True)
         agents_dir.mkdir(parents=True, exist_ok=True)
 
@@ -548,6 +627,7 @@ class HooliganInstaller:
 
     def _install_codex_files(self):
         skills_dir = self.codex_path["global_skills"]
+        self._cleanup_legacy_sibling_backups(skills_dir)
         skills_dir.mkdir(parents=True, exist_ok=True)
 
         with Progress(
@@ -849,11 +929,6 @@ class HooliganInstaller:
 
     def update_installation(self, force: bool = False, target_ref: str = "main") -> bool:
         self.console.print("[bold cyan]⬆️  Updating hooliGAN-harness from GitHub...[/bold cyan]")
-        if not (self.source_dir / ".git").exists():
-            return self._delegate_update_to_source_checkout(force=force, target_ref=target_ref)
-
-        self._refresh_repository(target_ref=target_ref, force=force)
-
         self.resolve_targets(prefer_installed=True)
         if not self.install_targets:
             self.console.print("[yellow]No existing installation found. Running a fresh install instead.[/yellow]")
@@ -865,52 +940,31 @@ class HooliganInstaller:
             elif target == "codex":
                 self.create_backup(self.codex_path["global_skills"])
 
-        self.install_files()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            downloaded_source = self._download_update_source(target_ref=target_ref, destination_root=Path(temp_dir))
+            updater = HooliganInstaller(source_dir=downloaded_source, home=self.home, console=self.console)
+            updater.install_targets = list(self.install_targets)
+            updater.install_files()
+
         self.console.print("[green]✅ Update complete.[/green]")
         return True
 
-    def _delegate_update_to_source_checkout(self, force: bool, target_ref: str) -> bool:
-        source_checkout = self._get_canonical_source_checkout()
-        if not source_checkout:
-            raise RuntimeError(
-                "This installed skill does not know where the original hooliGAN-harness checkout lives. "
-                "Run update from a cloned repository checkout."
-            )
+    def _download_update_source(self, target_ref: str, destination_root: Path) -> Path:
+        repository_url = self._get_repository_url()
+        archive_url = f"{repository_url}/archive/{target_ref}.zip"
+        self.console.print(f"[cyan]Downloading update archive from {archive_url}[/cyan]")
 
-        source_install = source_checkout / "install.py"
-        if not source_install.exists():
-            raise RuntimeError(f"Expected installer not found at {source_install}")
+        destination_root.mkdir(parents=True, exist_ok=True)
+        with urlopen(archive_url) as response:
+            payload = response.read()
 
-        command = [sys.executable, str(source_install), "update", "--ref", target_ref]
-        if force:
-            command.append("--force")
+        with zipfile.ZipFile(io.BytesIO(payload)) as archive:
+            archive.extractall(destination_root)
 
-        result = subprocess.run(command, text=True, capture_output=True)
-        if result.stdout.strip():
-            self.console.print(result.stdout.strip())
-        if result.returncode != 0:
-            raise RuntimeError(result.stderr.strip() or "Delegated update failed.")
-        return True
-
-    def _refresh_repository(self, target_ref: str, force: bool):
-        git_dir = self.source_dir / ".git"
-        if not git_dir.exists():
-            raise RuntimeError("Updater must be run from a cloned hooliGAN-harness repository.")
-
-        current_branch = self._git_output(["git", "branch", "--show-current"]).strip()
-        if current_branch != target_ref and not force:
-            raise RuntimeError(
-                f"Updater expects the local checkout to be on '{target_ref}' (found '{current_branch}'). "
-                "Use --force if you want to update anyway."
-            )
-
-        status = self._git_output(["git", "status", "--porcelain"])
-        if status.strip() and not force:
-            raise RuntimeError("Working tree has local changes. Commit or stash them before running update, or use --force.")
-
-        self._run_git(["git", "fetch", "origin", target_ref])
-        self._run_git(["git", "checkout", target_ref])
-        self._run_git(["git", "pull", "--ff-only", "origin", target_ref])
+        extracted_dirs = [path for path in destination_root.iterdir() if path.is_dir()]
+        if len(extracted_dirs) != 1:
+            raise RuntimeError("Unexpected update archive layout.")
+        return extracted_dirs[0]
 
     def _git_output(self, command: Sequence[str]) -> str:
         result = subprocess.run(
@@ -921,13 +975,6 @@ class HooliganInstaller:
             text=True,
         )
         return result.stdout
-
-    def _run_git(self, command: Sequence[str]):
-        result = subprocess.run(command, cwd=self.source_dir, text=True, capture_output=True)
-        if result.returncode != 0:
-            raise RuntimeError(result.stderr.strip() or "Git command failed.")
-        if result.stdout.strip():
-            self.console.print(result.stdout.strip())
 
     def interactive_install(self):
         self.show_banner()

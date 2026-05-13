@@ -1,5 +1,4 @@
 import json
-import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -81,6 +80,36 @@ class HooliganInstallerTests(unittest.TestCase):
         manifest = json.loads((skill_dir / install.INSTALL_MANIFEST_PATH).read_text(encoding="utf-8"))
         self.assertEqual(manifest["target"], "claude")
         self.assertEqual(Path(manifest["source_checkout"]).resolve(), self.source_dir.resolve())
+        self.assertIn("repository_url", manifest)
+
+    def test_create_backup_uses_hidden_backup_root_not_skills_sibling(self):
+        skill_dir = self.installer.claude_path["global_skills"]
+        skill_dir.mkdir(parents=True)
+        (skill_dir / "SKILL.md").write_text("skill", encoding="utf-8")
+
+        backup_path = self.installer.create_backup(skill_dir)
+
+        self.assertIsNotNone(backup_path)
+        self.assertTrue(backup_path.exists())
+        self.assertEqual(
+            backup_path.parent.resolve(),
+            (self.home / ".claude" / "backups" / install.SKILL_NAME).resolve(),
+        )
+        self.assertNotEqual(backup_path.parent, skill_dir.parent)
+
+    def test_install_moves_legacy_sibling_backups_out_of_skills_directory(self):
+        legacy_backup = self.home / ".claude" / "skills" / f"{install.SKILL_NAME}.backup.20260513"
+        legacy_backup.mkdir(parents=True)
+        (legacy_backup / "SKILL.md").write_text("legacy", encoding="utf-8")
+
+        (self.source_dir / ".git").mkdir()
+        self.installer.install_targets = ["claude"]
+        self.assertTrue(self.installer.install_files())
+
+        backup_root = self.home / ".claude" / "backups" / install.SKILL_NAME
+        moved_backups = list(backup_root.glob(f"{install.SKILL_NAME}.backup.20260513*"))
+        self.assertTrue(moved_backups)
+        self.assertFalse(legacy_backup.exists())
 
     def test_doctor_check_mode_reports_without_fixing(self):
         duplicate = self.home / ".codex" / "skills" / f"{install.SKILL_NAME}.backup.20260513"
@@ -90,79 +119,89 @@ class HooliganInstallerTests(unittest.TestCase):
         self.assertFalse(self.installer.doctor(apply_fixes=False))
         self.assertTrue(duplicate.exists())
 
-    def test_update_refuses_dirty_checkout_without_force(self):
+    def test_repository_url_normalizes_github_ssh_remote(self):
         (self.source_dir / ".git").mkdir()
 
         def fake_output(command):
-            if command == ["git", "branch", "--show-current"]:
-                return "main\n"
-            if command == ["git", "status", "--porcelain"]:
-                return " M install.py\n"
+            if command == ["git", "config", "--get", "remote.origin.url"]:
+                return "git@github.com:suyesh/hooligan-harness.git\n"
             raise AssertionError(command)
 
         self.installer._git_output = fake_output
-        self.installer._run_git = lambda command: None
+        self.assertEqual(self.installer._get_repository_url(), "https://github.com/suyesh/hooligan-harness")
 
-        with self.assertRaises(RuntimeError) as ctx:
-            self.installer.update_installation(force=False)
-        self.assertIn("Working tree has local changes", str(ctx.exception))
+    def test_update_uses_downloaded_archive_source(self):
+        installed_codex_skill = self.installer.codex_path["global_skills"]
+        installed_codex_skill.mkdir(parents=True)
+        (installed_codex_skill / "SKILL.md").write_text("installed", encoding="utf-8")
+        self.installer.install_targets = ["codex"]
 
-    def test_update_delegates_when_run_from_installed_skill_copy(self):
-        canonical_checkout = self.root / "canonical-checkout"
-        canonical_checkout.mkdir()
-        (canonical_checkout / "install.py").write_text("print('installer')", encoding="utf-8")
-        manifest_path = self.source_dir / install.INSTALL_MANIFEST_PATH
-        manifest_path.parent.mkdir(parents=True, exist_ok=True)
-        manifest_path.write_text(
-            json.dumps({"source_checkout": str(canonical_checkout)}),
-            encoding="utf-8",
-        )
+        download_dir = self.root / "downloaded"
+        download_dir.mkdir()
+        for file_name in ["SKILL.md", "README.md", "INSTALL.md", "install.py"]:
+            (download_dir / file_name).write_text(file_name, encoding="utf-8")
+        (download_dir / ".harness").mkdir()
+        (download_dir / "personas").mkdir()
+        for persona_name in install.CLAUDE_PERSONAS:
+            (download_dir / "personas" / persona_name).write_text(persona_name, encoding="utf-8")
 
-        with patch("install.subprocess.run", autospec=True) as run_subprocess:
-            run_subprocess.return_value.returncode = 0
-            run_subprocess.return_value.stdout = "delegated update\n"
-            run_subprocess.return_value.stderr = ""
+        with patch.object(self.installer, "_download_update_source", autospec=True) as download_source:
+            download_source.return_value = download_dir
+            self.assertTrue(self.installer.update_installation(force=False))
 
-            self.assertTrue(self.installer.update_installation(force=True))
+        self.assertTrue((self.installer.codex_path["global_skills"] / "SKILL.md").exists())
+        download_source.assert_called_once()
 
-        run_subprocess.assert_called_once_with(
-            [sys.executable, str(canonical_checkout / "install.py"), "update", "--ref", "main", "--force"],
-            text=True,
-            capture_output=True,
-        )
+    def test_update_does_not_create_visible_duplicate_skill_directories(self):
+        skill_dir = self.installer.claude_path["global_skills"]
+        skill_dir.mkdir(parents=True)
+        (skill_dir / "SKILL.md").write_text("existing", encoding="utf-8")
+        (skill_dir / "README.md").write_text("existing", encoding="utf-8")
+        (skill_dir / "INSTALL.md").write_text("existing", encoding="utf-8")
+        (skill_dir / "install.py").write_text("existing", encoding="utf-8")
+        (skill_dir / ".harness").mkdir()
+        (skill_dir / "personas").mkdir()
+        self.installer.install_targets = ["claude"]
 
-    def test_update_runs_git_refresh_when_forced(self):
-        (self.source_dir / ".git").mkdir()
-        commands = []
+        download_dir = self.root / "downloaded-update"
+        download_dir.mkdir()
+        for file_name in ["SKILL.md", "README.md", "INSTALL.md", "install.py"]:
+            (download_dir / file_name).write_text(file_name, encoding="utf-8")
+        (download_dir / ".harness").mkdir()
+        (download_dir / "personas").mkdir()
+        for persona_name in install.CLAUDE_PERSONAS:
+            (download_dir / "personas" / persona_name).write_text(persona_name, encoding="utf-8")
 
-        def fake_output(command):
-            if command == ["git", "branch", "--show-current"]:
-                return "feature-branch\n"
-            if command == ["git", "status", "--porcelain"]:
-                return " M install.py\n"
-            raise AssertionError(command)
+        with patch.object(self.installer, "_download_update_source", autospec=True) as download_source:
+            download_source.return_value = download_dir
+            self.assertTrue(self.installer.update_installation(force=False))
 
-        def fake_run(command):
-            commands.append(command)
+        visible_skill_dirs = sorted(path.name for path in skill_dir.parent.glob(f"{install.SKILL_NAME}*") if path.is_dir())
+        self.assertEqual(visible_skill_dirs, [install.SKILL_NAME])
 
-        self.installer._git_output = fake_output
-        self.installer._run_git = fake_run
-        self.installer.install_targets = []
+        backup_root = self.home / ".claude" / "backups" / install.SKILL_NAME
+        self.assertTrue(backup_root.exists())
+        self.assertTrue(any(path.is_dir() for path in backup_root.iterdir()))
 
-        with patch.object(self.installer, "choose_install_targets", autospec=True) as choose_targets:
-            with patch.object(self.installer, "install_files", autospec=True) as install_files:
-                choose_targets.side_effect = lambda: setattr(self.installer, "install_targets", ["codex"])
-                install_files.return_value = True
-                self.assertTrue(self.installer.update_installation(force=True))
+    def test_download_update_source_uses_https_archive_url(self):
+        destination_root = self.root / "archive-download"
+        archive_root = f"{install.SKILL_NAME}-main"
+        with patch.object(self.installer, "_get_repository_url", autospec=True) as get_repo_url:
+            get_repo_url.return_value = "https://github.com/suyesh/hooligan-harness"
+            with patch("install.urlopen", autospec=True) as mocked_urlopen:
+                import io
+                import zipfile
 
-        self.assertEqual(
-            commands,
-            [
-                ["git", "fetch", "origin", "main"],
-                ["git", "checkout", "main"],
-                ["git", "pull", "--ff-only", "origin", "main"],
-            ],
-        )
+                payload = io.BytesIO()
+                with zipfile.ZipFile(payload, "w") as archive:
+                    archive.writestr(f"{archive_root}/SKILL.md", "skill")
+                    archive.writestr(f"{archive_root}/README.md", "readme")
+                mocked_urlopen.return_value.__enter__.return_value.read.return_value = payload.getvalue()
+
+                extracted = self.installer._download_update_source("main", destination_root)
+
+        self.assertEqual(extracted.name, archive_root)
+        mocked_urlopen.assert_called_once_with("https://github.com/suyesh/hooligan-harness/archive/main.zip")
 
 
 if __name__ == "__main__":
