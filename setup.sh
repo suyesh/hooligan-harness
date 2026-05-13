@@ -19,7 +19,7 @@ NC='\033[0m' # No Color
 echo -e "${MAGENTA}${BOLD}"
 echo "╔══════════════════════════════════════════════╗"
 echo "║        hooliGAN-harness Installer           ║"
-echo "║              Version 1.3.0                  ║"
+echo "║              Version 1.3.1                  ║"
 echo "╚══════════════════════════════════════════════╝"
 echo -e "${NC}"
 
@@ -82,23 +82,9 @@ fi
 
 echo -e "${GREEN}✓${NC} uv is installed"
 
-# Create virtual environment with uv
-echo -e "${CYAN}🔧 Setting up virtual environment...${NC}"
-uv venv .venv --python python3
-
-# Activate virtual environment
-if [ -f ".venv/bin/activate" ]; then
-    source .venv/bin/activate
-elif [ -f ".venv/Scripts/activate" ]; then
-    source .venv/Scripts/activate
-else
-    echo -e "${RED}❌ Failed to create virtual environment${NC}"
-    exit 1
-fi
-
-# Install dependencies with uv
-echo -e "${CYAN}📦 Installing dependencies with uv...${NC}"
-uv pip install rich
+# Sync dependencies with uv
+echo -e "${CYAN}📦 Syncing Python dependencies with uv...${NC}"
+uv sync --python python3
 
 # Make installer executable
 chmod +x install.py
@@ -106,10 +92,7 @@ chmod +x install.py
 # Run the installer
 echo -e "${CYAN}🚀 Launching hooliGAN-harness installer...${NC}"
 echo ""
-python3 install.py
-
-# Deactivate virtual environment
-deactivate 2>/dev/null || true
+uv run python install.py
 
 echo ""
 echo -e "${GREEN}${BOLD}✨ Setup complete!${NC}"

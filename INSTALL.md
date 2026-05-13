@@ -12,20 +12,20 @@
 setup.bat
 ```
 
-### Manual Installation with Python
+### Manual Installation with uv
 ```bash
-# Install dependencies
-pip install rich
+# Sync dependencies from pyproject.toml
+uv sync
 
 # Run installer
-python install.py
+uv run python install.py
 ```
 
 ## What Gets Installed
 
-The installer will add the following components to your Claude Code installation:
+The installer auto-detects Claude Code and Codex. If both are present, it asks whether to install to Claude, Codex, or both.
 
-### Skills Directory
+### Claude Code Installation
 - `~/.claude/skills/hooliGAN-harness/`
   - `SKILL.md` - Main skill definition
   - `README.md` - Documentation
@@ -44,6 +44,14 @@ The installer will add the following components to your Claude Code installation
   - `harness-generator.md` - Implements code following best practices
   - `harness-evaluator.md` - Adversarial functional evaluation
   - `harness-security-evaluator.md` - Parallel security scanning
+
+### Codex Installation
+- `~/.codex/skills/hooliGAN-harness/`
+  - `SKILL.md` - Main skill definition
+  - `README.md` - Documentation
+  - `INSTALL.md` - Installation guide
+  - `personas/` - Persona instructions used by the skill
+  - `.harness/` - Configuration and knowledge base
 
 ## Features
 
@@ -65,17 +73,25 @@ The installer will add the following components to your Claude Code installation
 ## System Requirements
 
 - **Python**: 3.8 or higher
-- **Claude Code**: Must be installed (~/.claude/ directory must exist)
-- **Dependencies**: Automatically installed by setup scripts
+- **uv**: Required for Python package management
+- **Claude Code or Codex**: At least one supported environment must be installed (`~/.claude/` or `~/.codex/` must exist)
+- **Dependencies**: Synced from `pyproject.toml` by uv
   - `rich` - Beautiful terminal UI
-  - `uv` (optional) - Fast Python package manager
 
 ## Usage
 
-After installation, use the harness in your Claude Code session:
+After installation, use the harness in your coding agent session.
+
+Claude Code:
 
 ```bash
 /harness "Add user authentication with JWT and rate limiting"
+```
+
+Codex:
+
+```text
+Use hooliGAN-harness to add user authentication with JWT and rate limiting
 ```
 
 The framework will:
@@ -112,25 +128,26 @@ To remove hooliGAN-harness:
 
 ```bash
 # Run the installer and select 'uninstall'
-python install.py
+uv run python install.py
 ```
 
 Or manually remove:
 - `~/.claude/skills/hooliGAN-harness/`
 - Agent files from `~/.claude/agents/harness-*.md`
+- `~/.codex/skills/hooliGAN-harness/`
 
 ## Troubleshooting
 
-### "Claude Code installation not detected"
-- Ensure Claude Code is installed
-- Check that `~/.claude/` directory exists
+### "No supported AI coding environment detected"
+- Ensure Claude Code or Codex is installed
+- Check that `~/.claude/` or `~/.codex/` exists
 
 ### "Permission denied" errors
 - On macOS/Linux: `chmod +x setup.sh`
 - Run with appropriate permissions
 
 ### "uv not found"
-- The installer will attempt to install uv automatically
+- The setup scripts attempt to install uv automatically
 - Manual installation: https://github.com/astral-sh/uv
 
 ### "Python version too old"

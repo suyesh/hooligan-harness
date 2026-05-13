@@ -1,8 +1,8 @@
-# Harness Engineering: hooliGAN-harness v1.3.0
+# Harness Engineering: hooliGAN-harness v1.3.1
 
 **Stop guessing if your agent’s code works. Force it to survive the loop.**
 
-Inspired by the adversarial tension of GAN architectures, `hooliGAN-harness` is a high-reliability engineering framework for Claude Code. It replaces fragile "one-shot" generation with a zero-trust pipeline featuring architectural review, parallel security evaluation, confidence-based validation, automatic rollback, cross-session learning, multi-generator collaboration, and enterprise integrations — ensuring enterprise-grade code quality.
+Inspired by the adversarial tension of GAN architectures, `hooliGAN-harness` is a high-reliability engineering framework for Claude Code and Codex. It replaces fragile "one-shot" generation with a zero-trust pipeline featuring architectural review, parallel security evaluation, confidence-based validation, automatic rollback, cross-session learning, multi-generator collaboration, and enterprise integrations — ensuring enterprise-grade code quality.
 
 ---
 
@@ -13,7 +13,7 @@ Inspired by the adversarial tension of GAN architectures, `hooliGAN-harness` is 
 - ✅ All safety features active (snapshots, rollback, security scanning)
 - ✅ Multi-generator mode ready (parallel specialists)
 - ✅ Living documentation automatic
-- ✅ No external dependencies required
+- ✅ Python dependencies are managed through uv
 
 Just install and use - that's it!
 
@@ -38,6 +38,7 @@ setup.bat
 The beautiful CLI installer will:
 - Auto-detect Claude Code and Codex installations
 - Let you choose where to install (Claude, Codex, or both)
+- Sync Python dependencies with uv from `pyproject.toml`
 - Set up all personas and configurations
 - Provide usage instructions
 
@@ -93,6 +94,8 @@ This competitive loop continues until the output is indistinguishable from senio
 
 ## 📦 What Gets Installed
 
+Claude Code:
+
 ```
 ~/.claude/
 ├── skills/
@@ -114,25 +117,44 @@ This competitive loop continues until the output is indistinguishable from senio
     └── harness-security-evaluator.md # Security scanning persona
 ```
 
+Codex:
+
+```
+~/.codex/
+└── skills/
+    └── hooliGAN-harness/
+        ├── SKILL.md                    # Main skill definition
+        ├── README.md                   # This file
+        ├── personas/                   # Persona instructions loaded by the skill
+        └── .harness/                   # Configuration and knowledge base
+```
+
 ---
 
 ## 💻 Usage
 
-Once installed, trigger the harness in your Claude Code session - **no configuration needed!**
+Once installed, trigger the harness in your coding agent session - **no configuration needed!**
 
-### Basic Usage
+### Claude Code
 ```bash
 /harness "Add user authentication with JWT"
 ```
 
+### Codex
+Ask Codex to use the installed skill by name:
+
+```text
+Use hooliGAN-harness to add user authentication with JWT
+```
+
 ### Complex Features
-```bash
-/harness "Build a REST API with rate limiting, caching, and OpenAPI documentation"
+```text
+Use hooliGAN-harness to build a REST API with rate limiting, caching, and OpenAPI documentation
 ```
 
 ### With Specific Requirements
-```bash
-/harness "Refactor the payment system to use the Repository pattern with 95% test coverage"
+```text
+Use hooliGAN-harness to refactor the payment system to use the Repository pattern with 95% test coverage
 ```
 
 ---
@@ -252,7 +274,9 @@ The framework tracks:
 ## 🤝 Compatibility
 
 - **Claude Code**: Full support with all features
+- **Codex**: Full skill support with persona files bundled inside the skill
 - **Python**: 3.8 or higher required
+- **uv**: Required for Python package management
 - **Platforms**: macOS, Linux, Windows
 
 ---
@@ -283,6 +307,7 @@ The framework tracks:
 - **v1.1.0**: Added Security Evaluator, failure memory, confidence scoring
 - **v1.2.0**: Added Architect, rollback mechanisms, cross-session learning
 - **v1.3.0**: Added multi-generator mode, enterprise integrations, living docs
+- **v1.3.1**: Added Codex skill installation support
 
 ---
 

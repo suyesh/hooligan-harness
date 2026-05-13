@@ -7,7 +7,7 @@ setlocal enabledelayedexpansion
 echo.
 echo ╔══════════════════════════════════════════════╗
 echo ║        hooliGAN-harness Installer           ║
-echo ║              Version 1.3.0                  ║
+echo ║              Version 1.3.1                  ║
 echo ╚══════════════════════════════════════════════╝
 echo.
 
@@ -40,30 +40,24 @@ if errorlevel 1 (
 
 echo ✓ uv is installed
 
-REM Create virtual environment
-echo 🔧 Setting up virtual environment...
-uv venv .venv --python python
-
-REM Activate virtual environment
-if exist ".venv\Scripts\activate.bat" (
-    call .venv\Scripts\activate.bat
-) else (
-    echo ❌ Failed to create virtual environment
+REM Sync dependencies with uv
+echo 📦 Syncing Python dependencies with uv...
+uv sync --python python
+if errorlevel 1 (
+    echo ❌ Failed to sync dependencies with uv
     pause
     exit /b 1
 )
 
-REM Install dependencies
-echo 📦 Installing dependencies with uv...
-uv pip install rich
-
 REM Run the installer
 echo 🚀 Launching hooliGAN-harness installer...
 echo.
-python install.py
-
-REM Deactivate virtual environment
-call deactivate
+uv run python install.py
+if errorlevel 1 (
+    echo ❌ Installer failed
+    pause
+    exit /b 1
+)
 
 echo.
 echo ✨ Setup complete!

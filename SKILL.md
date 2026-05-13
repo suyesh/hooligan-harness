@@ -1,6 +1,6 @@
 ---
 name: harness
-description: Implements a high-reliability "Harness Engineering" loop with multi-generator collaboration, enterprise tool integration, and living documentation. Trigger when a user wants to "implement a feature," "start the harness," or "build with verification."
+description: Implements a high-reliability "Harness Engineering" loop with multi-generator collaboration, enterprise tool integration, and living documentation for Claude Code and Codex. Trigger when a user wants to "implement a feature," "start the harness," "use hooliGAN-harness," or "build with verification."
 version: 1.3.1
 ---
 ## Objective
@@ -8,6 +8,15 @@ version: 1.3.1
 To replace one-shot code generation with a structured, self-correcting agentic loop that ensures all code is planned in YAML, implemented via best practices of coding, and verified by parallel adversarial evaluators (functional and security) with confidence-based validation levels and failure pattern learning before declared complete.
 
 ## Instructions
+
+### Runtime Compatibility
+
+This skill is portable across Claude Code and Codex.
+
+* In Claude Code, the installer also places persona files in `~/.claude/agents/`.
+* In Codex, persona files live inside this skill at `personas/*.md`; read the relevant persona file before performing that role.
+* Codex should use its native plan, terminal, file-editing, subagent, and browser tools where available. Do not require Claude-specific slash commands or agent paths when running in Codex.
+* Treat `.harness/` files as project-local working artifacts. If they do not exist in the target repository, create them from the skill defaults.
 
 ### 1. Phase 0: Initialization
 
